@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% block title %}Master List — Excelsior Aviation GSE{% endblock %}
+{% block extra_css %}
+<style>
+  .filter-bar {
+    background: #fff; border-bottom: 1.5px solid #e8e9ec;
+    padding: 0.7rem 1.25rem;
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  }
+  .filter-tab {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.4rem 0.9rem; border-radius: 20px;
+    font-size: 0.8rem; font-weight: 600;
+    text-decoration: none; border: 1.5px solid #e8e9ec;
+    color: #7a7f8c; background: #f8f9fa; transition: all 0.18s;
+  }
+  .filter-tab.active { background: #f5a623; border-color: #f5a623; color: #1c1c2e; }
+  .filter-tab:hover:not(.active) { border-color: #f5a623; color: #d4891a; background: #fff8ec; }
+
+  .search-bar {
+    background: #fff; border-bottom: 1px solid #e8e9ec;
+    padding: 0.7rem 1.25rem;
+    display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  }
+  .search-wrap { flex: 1; min-width: 180px; position: relative; }
+  .search-wrap i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #bbb; }
+  .search-wrap input {
+    padding-left: 2.2rem; border-radius: 10px;
+    border: 1.5px solid #e8e9ec; font-family: 'Barlow', sans-serif;
+    font-size: 0.9rem; height: 38px; width: 100%; background: #fff;
+  }
+  .search-wrap input:focus { border-color: #f5a623; outline: none; box-shadow: 0 0 0 3px rgba(245,166,35,0.15); }
+  .btn-export {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: #fff8ec; color: #d4891a; border: 1.5px solid #ffd980;
+    border-radius: 10px; font-family: 'Barlow', sans-serif;
+    font-weight: 700; font-size: 0.85rem;
+    padding: 0.45rem 1rem; text-decoration: none;
+    white-space: nowrap; transition: all 0.18s;
+  }
+  .btn-export:hover { background: #f5a623; color: #1c1c2e; border-color: #f5a623; }
+  .btn-search-go {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: #f5a623; color: #1c1c2e; border: none;
+    border-radius: 10px; font-family: 'Barlow', sans-serif;
+    font-weight: 700; font-size: 0.85rem;
+    padding: 0.45rem 1rem; cursor: pointer; transition: all 0.18s;
+  }
+  .btn-search-go:hover { background: #d4891a; }
+
+  .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .records-table { width: 100%; min-width: 700px; border-collapse: separate; border-spacing: 0; font-size: 0.84rem; }
+  .records-table thead th {
+    background: #fff8ec; color: #1c1c2e;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 0.7rem 1rem; white-space: nowrap;
+    border-bottom: 2px solid #ffd980;
+  }
+  .records-table tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.12s; }
+  .records-table tbody tr:hover { background: #fff8ec; }
+  .records-table tbody td { padding: 0.6rem 1rem; color: #1c1c2e; vertical-align: middle; }
+
+  .badge-repair    { background:#fff3cd;color:#9a6000;border-radius:6px;padding:.18rem .5rem;font-size:.72rem;font-weight:700;text-transform:uppercase; }
+  .badge-inspection{ background:#e8f5e9;color:#1a6e2e;border-radius:6px;padding:.18rem .5rem;font-size:.72rem;font-weight:700;text-transform:uppercase; }
+  .badge-staff { background:#fff3e0;color:#FF6B00;border:1px solid rgba(255,107,0,0.3);border-radius:6px;padding:.15rem .45rem;font-size:.70rem;font-weight:800;text-transform:uppercase; }
+  .badge-user  { background:#f3f4f6;color:#555;border:1px solid #ddd;border-radius:6px;padding:.15rem .45rem;font-size:.70rem;font-weight:800;text-transform:uppercase; }
+  .inputted-by { display:flex;flex-direction:column;gap:.1rem; }
+  .inputted-by .name { font-weight:700;font-size:.83rem; }
+  .inputted-by .date { font-size:.74rem;color:#888; }
+
+  .empty-state { text-align:center;padding:3rem 1rem;color:#bbb;background:#fff; }
+  .empty-state i { font-size:2.5rem;display:block;margin-bottom:.75rem;color:#e8e9ec; }
+  .count-badge { background:#f5a623;color:#1c1c2e;border-radius:10px;padding:.15rem .5rem;font-size:.72rem;font-weight:800; }
+  .count-bar { padding:.45rem 1.25rem;background:#fff;border-bottom:1px solid #e8e9ec;font-size:.78rem;color:#7a7f8c; }
+
+  .action-btns { display:flex;gap:.3rem;align-items:center;flex-wrap:wrap; }
+  .btn-act {
+    display:inline-flex;align-items:center;gap:.22rem;
+    border-radius:6px;font-family:'Barlow',sans-serif;
+    font-size:.73rem;font-weight:700;padding:.28rem .55rem;
+    cursor:pointer;transition:all .18s;white-space:nowrap;text-decoration:none;border:1.5px solid;
+  }
+  .btn-edit  { background:#fff8ec;color:#d4891a;border-color:#ffd980; }
+  .btn-edit:hover  { background:#f5a623;color:#1c1c2e;border-color:#f5a623; }
+  .btn-view  { background:#e8f0ff;color:#1a52c8;border-color:#b3c8f5; }
+  .btn-view:hover  { background:#1a52c8;color:#fff;border-color:#1a52c8; }
+  .btn-delete{ background:#fff;color:#c0392b;border-color:#f5c0c0; }
+  .btn-delete:hover{ background:#e74c3c;color:#fff;border-color:#e74c3c; }
+  .btn-generate{ background:#fff8ec;color:#d4891a;border-color:#ffd980; }
+  .btn-generate:hover{ background:#f5a623;color:#1c1c2e;border-color:#f5a623; }
+
+  /* Modal */
+  .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal-box { background:#fff;border-radius:14px;padding:2rem;max-width:360px;width:90%;box-shadow:0 16px 48px rgba(0,0,0,.2);text-align:center; }
+  .modal-box i { font-size:2.5rem;color:#e74c3c;margin-bottom:.75rem;display:block; }
+  .modal-box h3 { font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;margin-bottom:.4rem; }
+  .modal-box p { color:#7a7f8c;font-size:.86rem;margin-bottom:1.4rem; }
+  .modal-actions { display:flex;gap:.75rem;justify-content:center; }
+  .btn-cancel { background:#f8f9fa;color:#555;border:1.5px solid #e8e9ec;border-radius:8px;padding:.6rem 1.4rem;font-family:'Barlow',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer; }
+  .btn-confirm-delete { background:#e74c3c;color:#fff;border:none;border-radius:8px;padding:.6rem 1.4rem;font-family:'Barlow',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer; }
+  .btn-confirm-delete:hover { background:#c0392b; }
+
+  /* Pagination */
+  .pagination-bar { display:flex;align-items:center;justify-content:center;gap:.4rem;padding:1rem 1.25rem;background:#fff;border-top:1px solid #e8e9ec;flex-wrap:wrap; }
+  .page-btn {
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:34px;height:34px;border-radius:8px;
+    font-size:.82rem;font-weight:700;text-decoration:none;
+    border:1.5px solid #e8e9ec;color:#555;background:#fff;transition:all .18s;padding:0 .5rem;
+  }
+  .page-btn:hover { border-color:#f5a623;color:#d4891a;background:#fff8ec; }
+  .page-btn.active { background:#f5a623;border-color:#f5a623;color:#1c1c2e; }
+  .page-btn.disabled { color:#ccc;pointer-events:none; }
+
+  @media(max-width:768px){
+    .filter-bar,.search-bar{padding:.6rem;gap:.4rem;}
+    .btn-export span,.btn-search-go span{display:none;}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="back-bar">
+  <a href="{% url 'dashboard' %}" class="back-btn"><i class="bi bi-arrow-left"></i> Dashboard</a>
+</div>
+<div class="page-header">
+  <h1><i class="bi bi-table"></i> Master List</h1>
+  <p>Search, filter, edit, view and export all records</p>
+</div>
+
+<!-- Tab Filter -->
+<div class="filter-bar">
+  <a href="?type=loadtest{% if search_query %}&search={{ search_query }}{% endif %}" class="filter-tab {% if record_type == 'loadtest' %}active{% endif %}">
+    <i class="bi bi-activity"></i> Load Test
+  </a>
+  <a href="?type=repair{% if search_query %}&search={{ search_query }}{% endif %}" class="filter-tab {% if record_type == 'repair' %}active{% endif %}">
+    <i class="bi bi-tools"></i> Repair & Inspection
+  </a>
+  <a href="?type=inventory{% if search_query %}&search={{ search_query }}{% endif %}" class="filter-tab {% if record_type == 'inventory' %}active{% endif %}">
+    <i class="bi bi-box-seam"></i> Inventory
+  </a>
+</div>
+
+<!-- Search + Export -->
+<div class="search-bar">
+  <form method="get" class="search-wrap">
+    <input type="hidden" name="type" value="{{ record_type }}">
+    <i class="bi bi-search"></i>
+    <input type="text" name="search" value="{{ search_query }}" placeholder="Search records…" id="searchInput">
+  </form>
+  <button onclick="document.querySelector('form').submit()" class="btn-search-go">
+    <i class="bi bi-search"></i> <span>Search</span>
+  </button>
+  <a href="{% url 'export_excel' %}?type={{ record_type }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-export">
+    <i class="bi bi-file-earmark-excel-fill"></i> <span>Export Excel</span>
+  </a>
+</div>
+
+<!-- Count bar -->
+<div class="count-bar">
+  {% if record_type == 'loadtest' %}
+    <span class="count-badge">{{ loadtest_count }}</span> Load Test record(s)
+  {% elif record_type == 'repair' %}
+    <span class="count-badge">{{ repair_count }}</span> Repair/Inspection record(s)
+  {% elif record_type == 'inventory' %}
+    <span class="count-badge">{{ inventory_count }}</span> Inventory record(s)
+  {% endif %}
+  {% if search_query %} — filtered by "<strong>{{ search_query }}</strong>"{% endif %}
+</div>
+
+<!-- Tables -->
+<div class="table-wrapper">
+
+  {% if record_type == 'loadtest' %}
+    {% if loadtest_records %}
+    <table class="records-table">
+      <thead><tr>
+        <th>#</th><th>Customer</th><th>Company</th><th>Description</th>
+        <th>Model No.</th><th>Serial No.</th><th>Tested Load</th><th>Safe Load</th>
+        <th>Certificate No.</th><th>Mechanic</th><th>Date Inspection</th><th>Date Due</th>
+        <th>Inputted By</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for r in loadtest_records %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td><strong>{{ r.customer_name }}</strong><br><small style="color:#7a7f8c;">{{ r.customer_address }}</small></td>
+          <td>{{ r.company }}</td><td>{{ r.description }}</td>
+          <td><code>{{ r.model_number }}</code></td><td><code>{{ r.serial_number }}</code></td>
+          <td><strong style="color:#d4891a;">{{ r.tested_load }}</strong></td>
+          <td>{{ r.safe_load }}</td>
+          <td>{{ r.certificate_number }}</td>
+          <td>{{ r.mechanic }}</td>
+          <td>{{ r.date_inspection }}</td><td>{{ r.date_due }}</td>
+          <td>
+            <div class="inputted-by">
+              {% if r.created_by %}
+                <span class="name">{{ r.created_by.get_full_name|default:r.created_by.username }}</span>
+                <span class="{% if r.created_by.is_staff %}badge-staff{% else %}badge-user{% endif %}">{% if r.created_by.is_staff %}Staff{% else %}User{% endif %}</span>
+                <span class="date"><i class="bi bi-calendar3"></i> {{ r.created_at|date:"M d, Y" }}</span>
+              {% else %}<span style="color:#bbb;font-size:.8rem;">—</span>{% endif %}
+            </div>
+          </td>
+          <td>
+            <div class="action-btns">
+              <a href="{% url 'edit_loadtest' r.pk %}" class="btn-act btn-edit"><i class="bi bi-pencil"></i> Edit</a>
+              <a href="{% url 'edit_loadtest' r.pk %}" class="btn-act btn-view"><i class="bi bi-eye"></i> View</a>
+              <a href="{% url 'cert_from_loadtest' r.pk %}" class="btn-act btn-generate"><i class="bi bi-award"></i> Go to Cert</a>
+              <button class="btn-act btn-delete" onclick="confirmDelete('{% url 'delete_loadtest' r.pk %}')"><i class="bi bi-trash"></i> Delete</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-inbox"></i><p>No load test records found.</p></div>
+    {% endif %}
+
+  {% elif record_type == 'repair' %}
+    {% if repair_records %}
+    <table class="records-table">
+      <thead><tr>
+        <th>#</th><th>Customer</th><th>Type</th><th>Company</th><th>Description</th>
+        <th>Model No.</th><th>Serial No.</th><th>Report No.</th>
+        <th>Mechanic</th><th>Date</th><th>Inputted By</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for r in repair_records %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td><strong>{{ r.customer_name }}</strong><br><small style="color:#7a7f8c;">{{ r.customer_address }}</small></td>
+          <td><span class="{% if r.record_type == 'repair' %}badge-repair{% else %}badge-inspection{% endif %}">{{ r.get_record_type_display }}</span></td>
+          <td>{{ r.company }}</td><td>{{ r.description }}</td>
+          <td><code>{{ r.model_number }}</code></td><td><code>{{ r.serial_number }}</code></td>
+          <td>{{ r.report_number }}</td><td>{{ r.mechanic }}</td><td>{{ r.date }}</td>
+          <td>
+            <div class="action-btns">
+              <a href="{% url 'edit_repair' r.pk %}" class="btn-act btn-edit"><i class="bi bi-pencil"></i> Edit</a>
+              <a href="{% url 'edit_repair' r.pk %}" class="btn-act btn-view"><i class="bi bi-eye"></i> View</a>
+              <a href="{% url 'cert_from_repair' r.pk %}" class="btn-act btn-generate"><i class="bi bi-award"></i> Go to Cert</a>
+              <button class="btn-act btn-delete" onclick="confirmDelete('{% url 'delete_repair' r.pk %}')"><i class="bi bi-trash"></i> Delete</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-inbox"></i><p>No repair/inspection records found.</p></div>
+    {% endif %}
+
+  {% elif record_type == 'inventory' %}
+    {% if inventory_records %}
+    <table class="records-table">
+      <thead><tr>
+        <th>#</th><th>Customer</th><th>Description</th>
+        <th>Model No.</th><th>Serial No.</th><th>Location</th><th>Quantity</th><th>Remarks</th><th>Inputted By</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for r in inventory_records %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td><strong>{{ r.customer_name }}</strong><br><small style="color:#7a7f8c;">{{ r.customer_address }}</small></td>
+          <td>{{ r.description }}</td>
+          <td><code>{{ r.model_number }}</code></td><td><code>{{ r.serial_number }}</code></td>
+          <td>{{ r.location }}</td>
+          <td><strong>{{ r.quantity }}</strong></td>
+          <td>{{ r.remarks|truncatechars:40 }}</td>
+          <td>
+            <div class="inputted-by">
+              {% if r.created_by %}
+                <span class="name">{{ r.created_by.get_full_name|default:r.created_by.username }}</span>
+                <span class="{% if r.created_by.is_staff %}badge-staff{% else %}badge-user{% endif %}">{% if r.created_by.is_staff %}Staff{% else %}User{% endif %}</span>
+                <span class="date"><i class="bi bi-calendar3"></i> {{ r.created_at|date:"M d, Y" }}</span>
+              {% else %}<span style="color:#bbb;font-size:.8rem;">—</span>{% endif %}
+            </div>
+          </td>
+          <td>
+            <div class="action-btns">
+              <a href="{% url 'edit_inventory' r.pk %}" class="btn-act btn-edit"><i class="bi bi-pencil"></i> Edit</a>
+              <a href="{% url 'edit_inventory' r.pk %}" class="btn-act btn-view"><i class="bi bi-eye"></i> View</a>
+              <a href="{% url 'cert_from_inventory' r.pk %}" class="btn-act btn-generate"><i class="bi bi-award"></i> Go to Cert</a>
+              <button class="btn-act btn-delete" onclick="confirmDelete('{% url 'delete_inventory' r.pk %}')"><i class="bi bi-trash"></i> Delete</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-inbox"></i><p>No inventory records found.</p></div>
+    {% endif %}
+  {% endif %}
+
+</div>
+
+<!-- Pagination -->
+{% with records=loadtest_records %}
+{% if record_type == 'repair' %}{% with records=repair_records %}{% endwith %}{% endif %}
+{% if record_type == 'inventory' %}{% with records=inventory_records %}{% endwith %}{% endif %}
+{% endwith %}
+
+{% with page_obj=loadtest_records %}
+{% if record_type == 'repair' %}{% with page_obj=repair_records %}
+{% if page_obj.has_other_pages %}
+<div class="pagination-bar">
+  {% if page_obj.has_previous %}
+    <a href="?type={{ record_type }}&page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-btn"><i class="bi bi-chevron-left"></i></a>
+  {% else %}<span class="page-btn disabled"><i class="bi bi-chevron-left"></i></span>{% endif %}
+  {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+      <span class="page-btn active">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <a href="?type={{ record_type }}&page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-btn">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+  {% if page_obj.has_next %}
+    <a href="?type={{ record_type }}&page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-btn"><i class="bi bi-chevron-right"></i></a>
+  {% else %}<span class="page-btn disabled"><i class="bi bi-chevron-right"></i></span>{% endif %}
+</div>
+{% endif %}
+{% endwith %}{% endif %}
+
+{% if record_type == 'inventory' %}{% with page_obj=inventory_records %}
+{% if page_obj.has_other_pages %}
+<div class="pagination-bar">
+  {% if page_obj.has_previous %}
+    <a href="?type={{ record_type }}&page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-btn"><i class="bi bi-chevron-left"></i></a>
+  {% else %}<span class="page-btn disabled"><i class="bi bi-chevron-left"></i></span>{% endif %}
+  {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+      <span class="page-btn active">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <a href="?type={{ record_type }}&page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-btn">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+  {% if page_obj.has_next %}
+    <a href="?type={{ record_type }}&page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-btn"><i class="bi bi-chevron-right"></i></a>
+  {% else %}<span class="page-btn disabled"><i class="bi bi-chevron-right"></i></span>{% endif %}
+</div>
+{% endif %}
+{% endwith %}{% endif %}
+
+{% if record_type == 'loadtest' %}{% with page_obj=loadtest_records %}
+{% if page_obj.has_other_pages %}
+<div class="pagination-bar">
+  {% if page_obj.has_previous %}
+    <a href="?type={{ record_type }}&page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-btn"><i class="bi bi-chevron-left"></i></a>
+  {% else %}<span class="page-btn disabled"><i class="bi bi-chevron-left"></i></span>{% endif %}
+  {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+      <span class="page-btn active">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <a href="?type={{ record_type }}&page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-btn">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+  {% if page_obj.has_next %}
+    <a href="?type={{ record_type }}&page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-btn"><i class="bi bi-chevron-right"></i></a>
+  {% else %}<span class="page-btn disabled"><i class="bi bi-chevron-right"></i></span>{% endif %}
+</div>
+{% endif %}
+{% endwith %}{% endif %}
+{% endwith %}
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <h3>Delete Record?</h3>
+    <p>This action cannot be undone. The record will be permanently removed.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <form id="deleteForm" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn-confirm-delete"><i class="bi bi-trash"></i> Yes, Delete</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('searchInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); this.closest('form').submit(); }
+});
+function confirmDelete(url) {
+  document.getElementById('deleteForm').action = url;
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeModal() { document.getElementById('deleteModal').classList.remove('show'); }
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+{% endblock %}

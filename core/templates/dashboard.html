@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Excelsior Aviation GSE{% endblock %}
+{% block extra_css %}
+<style>
+  .dash-wrap { padding: 1.5rem; }
+  .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.78rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: #7a7f8c; margin-bottom: 0.85rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: #e8e9ec; }
+
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1rem; margin-bottom: 1.75rem;
+  }
+  .dash-card {
+    background: #fff; border: 1px solid #e8e9ec; border-radius: 12px;
+    padding: 1.35rem; text-decoration: none; color: #1c1c2e;
+    display: flex; flex-direction: column; gap: 0.85rem;
+    transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .dash-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.10); border-color: #ccc; }
+  .dash-card:active { transform: scale(0.98); }
+  .dash-card-icon {
+    width: 48px; height: 48px; border-radius: 10px;
+    background: #f8f9fa; border: 1.5px solid #e8e9ec;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; color: #555;
+  }
+  .dash-card h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.08rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.5px; color: #1c1c2e;
+  }
+  .dash-card p { font-size: 0.79rem; color: #7a7f8c; line-height: 1.4; }
+  .dash-card .card-arrow {
+    color: #bbb; font-size: 0.9rem; margin-top: auto;
+    align-self: flex-end; transition: transform 0.2s;
+  }
+  .dash-card:hover .card-arrow { transform: translateX(4px); color: #777; }
+
+  @media (max-width: 768px) {
+    .dash-wrap { padding: 1rem; }
+    .dash-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  }
+  @media (max-width: 480px) {
+    .dash-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .dash-card p { display: none; }
+    .dash-card { padding: 1rem; gap: 0.6rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+  <p>Welcome back, {{ user.get_full_name|default:user.username }}</p>
+</div>
+
+<div class="dash-wrap">
+  <div class="section-title"><i class="bi bi-grid-3x3-gap"></i> Modules</div>
+  <div class="dash-grid">
+
+    <a href="{% url 'loadtest' %}" class="dash-card">
+      <div class="dash-card-icon"><i class="bi bi-activity"></i></div>
+      <div><h3>Load Test</h3><p>Record load test inspections and certifications</p></div>
+      <i class="bi bi-arrow-right card-arrow"></i>
+    </a>
+
+    <a href="{% url 'repair' %}" class="dash-card">
+      <div class="dash-card-icon"><i class="bi bi-tools"></i></div>
+      <div><h3>Repair</h3><p>Log equipment repairs and service records</p></div>
+      <i class="bi bi-arrow-right card-arrow"></i>
+    </a>
+
+    <a href="{% url 'inspection' %}" class="dash-card">
+      <div class="dash-card-icon"><i class="bi bi-clipboard-check"></i></div>
+      <div><h3>Inspection</h3><p>Record inspection results and findings</p></div>
+      <i class="bi bi-arrow-right card-arrow"></i>
+    </a>
+
+    <a href="{% url 'inventory' %}" class="dash-card">
+      <div class="dash-card-icon"><i class="bi bi-box-seam"></i></div>
+      <div><h3>Inventory</h3><p>Track parts, equipment, and stock levels</p></div>
+      <i class="bi bi-arrow-right card-arrow"></i>
+    </a>
+
+    <a href="{% url 'certificate_list' %}" class="dash-card">
+      <div class="dash-card-icon"><i class="bi bi-award"></i></div>
+      <div><h3>Certification</h3><p>Generate official load test certificates</p></div>
+      <i class="bi bi-arrow-right card-arrow"></i>
+    </a>
+
+    <a href="{% url 'list_records' %}" class="dash-card">
+      <div class="dash-card-icon"><i class="bi bi-table"></i></div>
+      <div><h3>Master List</h3><p>Search, filter, and export all records</p></div>
+      <i class="bi bi-arrow-right card-arrow"></i>
+    </a>
+
+    {% if user.is_staff %}
+    <a href="{% url 'admin_user_list' %}" class="dash-card" style="border-color:#ffd980;background:#fffcf3;">
+      <div class="dash-card-icon" style="background:#fff8ec;border-color:#ffd980;color:#d4891a;"><i class="bi bi-shield-lock-fill"></i></div>
+      <div><h3>User Accounts</h3><p>Create and manage system user accounts</p></div>
+      <i class="bi bi-arrow-right card-arrow"></i>
+    </a>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

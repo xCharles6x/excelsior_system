@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Load Test — Excelsior Aviation GSE{% endblock %}
+
+{% block content %}
+<div class="back-bar">
+  <a href="{% url 'dashboard' %}" class="back-btn"><i class="bi bi-arrow-left"></i> Dashboard</a>
+</div>
+<div class="page-header">
+  <h1><i class="bi bi-activity"></i> Load Test Record</h1>
+  <p>Enter load test inspection details below</p>
+</div>
+<div class="content-wrap">
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Customer Information -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-header"><i class="bi bi-person-badge"></i> Customer Information</div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Customer Name</label>
+            {{ form.customer_name }}
+            {{ form.customer_name.errors }}
+          </div>
+          <div class="form-group">
+            <label>Customer Address</label>
+            {{ form.customer_address }}
+            {{ form.customer_address.errors }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load Test Details -->
+    <div class="card">
+      <div class="card-header"><i class="bi bi-activity"></i> Load Test Details</div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Company</label>
+            {{ form.company }}{{ form.company.errors }}
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            {{ form.description }}{{ form.description.errors }}
+          </div>
+          <div class="form-group">
+            <label>Model Number</label>
+            {{ form.model_number }}{{ form.model_number.errors }}
+          </div>
+          <div class="form-group">
+            <label>Serial Number</label>
+            {{ form.serial_number }}{{ form.serial_number.errors }}
+          </div>
+          <div class="form-group">
+            <label>Tested Load</label>
+            {{ form.tested_load }}{{ form.tested_load.errors }}
+          </div>
+          <div class="form-group">
+            <label>Safe Load</label>
+            {{ form.safe_load }}{{ form.safe_load.errors }}
+          </div>
+          <div class="form-group">
+            <label>Equipment</label>
+            {{ form.equipment }}{{ form.equipment.errors }}
+          </div>
+          <div class="form-group">
+            <label>Certificate Number</label>
+            {{ form.certificate_number }}{{ form.certificate_number.errors }}
+          </div>
+          <div class="form-group">
+            <label>Mechanic</label>
+            {{ form.mechanic }}{{ form.mechanic.errors }}
+          </div>
+          <div class="form-group">
+            <label>Date Inspection</label>
+            {{ form.date_inspection }}{{ form.date_inspection.errors }}
+          </div>
+          <div class="form-group">
+            <label>Date Due</label>
+            {{ form.date_due }}{{ form.date_due.errors }}
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Remarks</label>
+            {{ form.remark }}{{ form.remark.errors }}
+          </div>
+        </div>
+        <div style="margin-top:1.25rem;display:flex;gap:0.75rem;">
+          <button type="submit" class="btn-orange"><i class="bi bi-save2-fill"></i> Submit Record</button>
+          <button type="reset" class="btn-white"><i class="bi bi-arrow-counterclockwise"></i> Clear</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

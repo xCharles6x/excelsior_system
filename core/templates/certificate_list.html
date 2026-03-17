@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block title %}Certificates — Excelsior Aviation GSE{% endblock %}
+{% block extra_css %}
+<style>
+  .cl-toolbar {
+    background:#fff; border-bottom:1px solid #e8e9ec;
+    padding:0.7rem 1.25rem;
+    display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;
+  }
+  .search-wrap { flex:1; min-width:180px; position:relative; }
+  .search-wrap i { position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:#bbb; }
+  .search-wrap input {
+    padding-left:2.2rem; border-radius:10px;
+    border:1.5px solid #e8e9ec; font-family:'Barlow',sans-serif;
+    font-size:0.9rem; height:38px; width:100%; background:#fff;
+  }
+  .search-wrap input:focus { border-color:#f5a623; outline:none; box-shadow:0 0 0 3px rgba(245,166,35,.15); }
+  .btn-new {
+    background:#f5a623; color:#1c1c2e; border:none; border-radius:8px;
+    font-family:'Barlow',sans-serif; font-weight:700; font-size:0.87rem;
+    padding:0.45rem 1rem; cursor:pointer; min-height:38px;
+    display:flex; align-items:center; gap:0.4rem; text-decoration:none;
+    white-space:nowrap; transition:background .18s;
+  }
+  .btn-new:hover { background:#d4891a; }
+
+  .table-wrapper { overflow-x:auto; }
+  .cert-table { width:100%; border-collapse:separate; border-spacing:0; font-size:0.84rem; }
+  .cert-table thead th {
+    background:#fff8ec; color:#1c1c2e;
+    font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.78rem;
+    text-transform:uppercase; letter-spacing:.5px;
+    padding:0.7rem 1rem; white-space:nowrap; border-bottom:2px solid #ffd980;
+  }
+  .cert-table tbody tr { border-bottom:1px solid #f0f0f0; transition:background .12s; }
+  .cert-table tbody tr:hover { background:#fff8ec; }
+  .cert-table tbody td { padding:0.6rem 1rem; color:#1c1c2e; vertical-align:middle; }
+
+  .cert-no-tag {
+    display:inline-block; background:#fff3cd; border:1px solid #ffc107;
+    border-radius:6px; padding:0.15rem 0.5rem;
+    font-family:'Barlow Condensed',sans-serif; font-size:0.8rem; font-weight:800; color:#856404;
+  }
+
+  .action-btns { display:flex; gap:0.35rem; align-items:center; flex-wrap:wrap; }
+  .btn-act {
+    display:inline-flex; align-items:center; gap:0.25rem;
+    border-radius:6px; font-family:'Barlow',sans-serif;
+    font-size:0.75rem; font-weight:700; padding:0.3rem 0.6rem;
+    cursor:pointer; transition:all .18s; white-space:nowrap; text-decoration:none;
+  }
+  .btn-edit-act  { background:#fff8ec; color:#d4891a; border:1.5px solid #ffd980; }
+  .btn-edit-act:hover { background:#f5a623; color:#1c1c2e; border-color:#f5a623; }
+  .btn-dl-act    { background:#e8f5e9; color:#1a6e2e; border:1.5px solid #b7ecbf; }
+  .btn-dl-act:hover { background:#28a745; color:#fff; border-color:#28a745; }
+  .btn-del-act   { background:#fff; color:#c0392b; border:1.5px solid #f5c0c0; }
+  .btn-del-act:hover { background:#e74c3c; color:#fff; border-color:#e74c3c; }
+
+  .empty-state { text-align:center; padding:3rem 1rem; color:#bbb; background:#fff; }
+  .empty-state i { font-size:2.5rem; display:block; margin-bottom:0.75rem; color:#e8e9ec; }
+
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:1000; align-items:center; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal-box { background:#fff; border-radius:14px; padding:2rem; max-width:360px; width:90%; box-shadow:0 16px 48px rgba(0,0,0,.2); text-align:center; }
+  .modal-box i { font-size:2.5rem; color:#e74c3c; margin-bottom:.75rem; display:block; }
+  .modal-box h3 { font-family:'Barlow Condensed',sans-serif; font-size:1.3rem; font-weight:800; margin-bottom:.4rem; }
+  .modal-box p { color:#7a7f8c; font-size:.86rem; margin-bottom:1.4rem; }
+  .modal-actions { display:flex; gap:.75rem; justify-content:center; }
+  .btn-cancel { background:#f8f9fa; color:#555; border:1.5px solid #e8e9ec; border-radius:8px; padding:.6rem 1.4rem; font-family:'Barlow',sans-serif; font-weight:700; font-size:.88rem; cursor:pointer; }
+  .btn-del-confirm { background:#e74c3c; color:#fff; border:none; border-radius:8px; padding:.6rem 1.4rem; font-family:'Barlow',sans-serif; font-weight:700; font-size:.88rem; cursor:pointer; }
+  .btn-del-confirm:hover { background:#c0392b; }
+  .count-bar { padding:.45rem 1.25rem; background:#fff; border-bottom:1px solid #e8e9ec; font-size:.78rem; color:#7a7f8c; }
+  .count-badge { background:#f5a623; color:#1c1c2e; border-radius:10px; padding:.15rem .5rem; font-size:.72rem; font-weight:800; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="back-bar">
+  <a href="{% url 'dashboard' %}" class="back-btn"><i class="bi bi-arrow-left"></i> Dashboard</a>
+</div>
+<div class="page-header">
+  <h1><i class="bi bi-award"></i> Certificates</h1>
+  <p>Manage, download and regenerate load test certificates</p>
+</div>
+
+<div class="cl-toolbar">
+  <form method="get" class="search-wrap">
+    <i class="bi bi-search"></i>
+    <input type="text" name="search" value="{{ search_query }}" placeholder="Search by cert no., customer, or product…" id="searchInput"/>
+  </form>
+  <button onclick="document.querySelector('form').submit()" style="background:#f5a623;color:#1c1c2e;border:none;border-radius:8px;padding:.45rem .9rem;cursor:pointer;font-weight:700;min-height:38px;display:flex;align-items:center;gap:.3rem;font-size:.83rem;">
+    <i class="bi bi-search"></i> Search
+  </button>
+  <a href="{% url 'certificate_create' %}" class="btn-new">
+    <i class="bi bi-plus-lg"></i> New Certificate
+  </a>
+</div>
+
+<div class="count-bar">
+  <span class="count-badge">{{ certificates.count }}</span> certificate(s)
+  {% if search_query %} — filtered by "<strong>{{ search_query }}</strong>"{% endif %}
+</div>
+
+<div class="table-wrapper">
+  {% if certificates %}
+  <table class="cert-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Certificate No.</th>
+        <th>Customer</th>
+        <th>Product Description</th>
+        <th>Date of Inspection</th>
+        <th>Due Next</th>
+        <th>Technician</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in certificates %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td><span class="cert-no-tag">{{ c.certificate_number }}</span></td>
+        <td><strong>{{ c.customer.name }}</strong></td>
+        <td>{{ c.product_description }}</td>
+        <td>{{ c.date_of_inspection|date:"M d, Y" }}</td>
+        <td>{{ c.due_next_inspection|date:"M d, Y" }}</td>
+        <td>{{ c.technician_name }}</td>
+        <td>
+          <div class="action-btns">
+            <a href="{% url 'certificate_edit' c.pk %}" class="btn-act btn-edit-act">
+              <i class="bi bi-pencil"></i> Edit
+            </a>
+            <a href="{% url 'certificate_download' c.pk %}" class="btn-act btn-dl-act" target="_blank">
+              <i class="bi bi-file-earmark-word-fill"></i> Download
+            </a>
+            <button class="btn-act btn-del-act" onclick="confirmDelete('{% url 'certificate_delete' c.pk %}', '{{ c.certificate_number }}')">
+              <i class="bi bi-trash"></i> Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-award"></i>
+    <p>No certificates found. <a href="{% url 'certificate_create' %}" style="color:#d4891a;font-weight:700;">Create your first certificate</a></p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <h3>Delete Certificate?</h3>
+    <p id="deleteModalMsg">This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <form id="deleteForm" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn-del-confirm"><i class="bi bi-trash"></i> Yes, Delete</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('searchInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); this.closest('form').submit(); }
+});
+function confirmDelete(url, certNo) {
+  document.getElementById('deleteForm').action = url;
+  document.getElementById('deleteModalMsg').textContent = `Certificate ${certNo} will be permanently deleted.`;
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeModal() { document.getElementById('deleteModal').classList.remove('show'); }
+document.getElementById('deleteModal').addEventListener('click', function(e) { if (e.target===this) closeModal(); });
+</script>
+{% endblock %}

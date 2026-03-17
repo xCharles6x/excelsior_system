@@ -1,0 +1,773 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }} — Excelsior Aviation GSE{% endblock %}
+{% block extra_css %}
+<style>
+/* ── Layout ─────────────────────────────────────────────────────── */
+.cf-wrap { padding: 1.5rem; max-width: 1000px; }
+
+/* ── Section card ───────────────────────────────────────────────── */
+.cf-section {
+  background: #fff; border: 1px solid #e8e9ec; border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+.cf-section-header {
+  background: #fff8ec; border-bottom: 2px solid #ffd980;
+  padding: 0.75rem 1.25rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.92rem; font-weight: 800; color: #1c1c2e;
+  text-transform: uppercase; letter-spacing: 1px;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.cf-section-header i { color: #d4891a; }
+.cf-section-body { padding: 1.25rem; }
+
+/* ── Form grid ──────────────────────────────────────────────────── */
+.cf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 1rem; }
+.cf-grid-2 { grid-template-columns: 1fr 1fr; }
+.cf-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.cf-fg { display: flex; flex-direction: column; gap: 0.3rem; }
+.cf-fg.full { grid-column: 1 / -1; }
+.cf-fg label {
+  font-size: 0.73rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: #7a7f8c;
+}
+.cert-input {
+  border: 1.5px solid #e8e9ec; border-radius: 8px;
+  padding: 0.55rem 0.75rem; font-family: 'Barlow', sans-serif;
+  font-size: 0.9rem; color: #1c1c2e; background: #fff;
+  width: 100%; min-height: 42px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.cert-input:focus { outline: none; border-color: #f5a623; box-shadow: 0 0 0 3px rgba(245,166,35,.15); }
+textarea.cert-input { min-height: 80px; resize: vertical; }
+select.cert-input { cursor: pointer; }
+.errorlist { list-style:none; color:#c0392b; font-size:0.75rem; margin-top:0.2rem; }
+
+/* ── Customer row with Add / Remove buttons ─────────────────────── */
+.customer-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+.customer-row select { flex: 1; }
+.btn-add-customer {
+  background: #fff8ec; border: 1.5px solid #ffd980; color: #d4891a;
+  border-radius: 8px; padding: 0 0.8rem; min-height: 42px; cursor: pointer;
+  font-size: 0.85rem; font-weight: 700; white-space: nowrap;
+  display: flex; align-items: center; gap: 0.3rem;
+  transition: all 0.18s; flex-shrink: 0;
+}
+.btn-add-customer:hover { background:#f5a623; color:#1c1c2e; border-color:#f5a623; }
+.btn-remove-customer {
+  background: #fff5f5; border: 1.5px solid #f5c0c0; color: #c0392b;
+  border-radius: 8px; padding: 0 0.8rem; min-height: 42px; cursor: pointer;
+  font-size: 0.85rem; font-weight: 700; white-space: nowrap;
+  display: flex; align-items: center; gap: 0.3rem;
+  transition: all 0.18s; flex-shrink: 0;
+}
+.btn-remove-customer:hover { background:#e74c3c; color:#fff; border-color:#e74c3c; }
+
+/* ── Remove customer confirm modal ──────────────────────────────── */
+.modal-danger-title { color: #c0392b; }
+.modal-danger-title i { color: #e74c3c; }
+
+/* ── Test Equipment table ───────────────────────────────────────── */
+.eq-table-wrap { overflow-x: auto; }
+.eq-table {
+  width: 100%; border-collapse: collapse; font-size: 0.83rem;
+  min-width: 700px;
+}
+.eq-table thead th {
+  background: #fff8ec; border: 1px solid #ffd980;
+  padding: 0.5rem 0.6rem; font-size: 0.72rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.5px; color: #7a7f8c;
+  white-space: nowrap;
+}
+.eq-table tbody td {
+  border: 1px solid #e8e9ec; padding: 0.3rem 0.4rem; vertical-align: top;
+}
+.eq-table tbody td.del-col { text-align: center; vertical-align: middle; width: 36px; }
+.tbl-input {
+  border: none; background: transparent; width: 100%; font-family:'Barlow',sans-serif;
+  font-size: 0.88rem; color:#1c1c2e; padding: 0.2rem; min-height: 32px;
+}
+.tbl-input:focus { outline: 2px solid #f5a623; border-radius: 4px; background:#fffbf2; }
+.del-row-btn {
+  background:none; border:none; color:#c0392b; cursor:pointer;
+  font-size:1rem; padding:0.2rem; line-height:1;
+  transition: color 0.15s;
+}
+.del-row-btn:hover { color:#e74c3c; }
+.btn-add-row {
+  background:#fff8ec; border:1.5px dashed #ffd980; color:#d4891a;
+  border-radius:8px; padding:0.45rem 1rem; cursor:pointer;
+  font-family:'Barlow',sans-serif; font-weight:700; font-size:0.83rem;
+  display:flex; align-items:center; gap:0.4rem;
+  transition: all 0.18s; margin-top:0.75rem;
+}
+.btn-add-row:hover { background:#f5a623; color:#1c1c2e; border-color:#f5a623; border-style:solid; }
+.hidden-row { display:none !important; }
+
+/* ── Cert number badge ──────────────────────────────────────────── */
+.lc-input-wrap {
+  display: flex; gap: 0; align-items: stretch;
+}
+.lc-input-wrap .lc-text {
+  border-radius: 6px 0 0 6px !important; border-right: none !important; flex:1;
+}
+.lc-dropdown-btn {
+  background: #fff8ec; border: 1.5px solid #ffd980; border-left: none;
+  border-radius: 0 6px 6px 0; padding: 0 0.6rem; cursor: pointer;
+  color: #d4891a; font-size: 0.8rem; display: flex; align-items: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.lc-dropdown-btn:hover { background: #f5a623; color: #1c1c2e; border-color: #f5a623; }
+
+.lc-list-panel {
+  border: 1.5px solid #ffd980; border-radius: 8px;
+  background: #fff; margin-top: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  z-index: 100; position: relative;
+  overflow: hidden;
+}
+.lc-list-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 0.75rem; background: #fff8ec;
+  border-bottom: 1px solid #ffd980;
+  font-size: 0.78rem; font-weight: 700; color: #7a4f00;
+}
+.lc-add-saved-btn {
+  background: #f5a623; border: none; border-radius: 6px;
+  padding: 0.25rem 0.6rem; font-size: 0.75rem; font-weight: 700;
+  color: #1c1c2e; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;
+}
+.lc-add-saved-btn:hover { background: #d4891a; color: #fff; }
+.lc-list-add-row {
+  display: flex; gap: 0.4rem; padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #ffd980; background: #fffdf5;
+}
+.lc-save-new-btn {
+  background: #28a745; border: none; border-radius: 6px;
+  padding: 0 0.65rem; color: #fff; cursor: pointer; font-size: 0.9rem;
+  min-height: 36px; display: flex; align-items: center;
+}
+.lc-save-new-btn:hover { background: #1a6e2e; }
+.lc-saved-list {
+  list-style: none; max-height: 180px; overflow-y: auto; margin: 0; padding: 0;
+}
+.lc-saved-list li {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.45rem 0.75rem; border-bottom: 1px solid #f5f5f5;
+  font-size: 0.85rem; gap: 0.5rem;
+}
+.lc-saved-list li:hover { background: #fff8ec; }
+.lc-item-text {
+  flex: 1; cursor: pointer; color: #1c1c2e;
+}
+.lc-item-text:hover { color: #d4891a; font-weight: 600; }
+.lc-remove-item-btn {
+  background: none; border: none; color: #c0392b; cursor: pointer;
+  font-size: 0.9rem; padding: 0.1rem 0.3rem; border-radius: 4px; flex-shrink: 0;
+  line-height: 1;
+}
+.lc-remove-item-btn:hover { background: #fdf0f0; }
+.lc-empty { color: #bbb; font-size: 0.82rem; padding: 0.6rem 0.75rem !important; }
+
+.cert-no-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: #fff3cd; border: 1.5px solid #ffc107;
+  border-radius: 8px; padding: 0.5rem 1rem;
+  font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:800;
+  color: #856404; margin-bottom:1.25rem;
+}
+.cert-no-badge i { color:#f5a623; }
+
+/* ── Actions bar ────────────────────────────────────────────────── */
+.cf-actions {
+  display:flex; gap:0.75rem; padding-top:1rem;
+  border-top:1px solid #e8e9ec; flex-wrap:wrap; margin-top:0.5rem;
+}
+
+/* ── Customer modal ─────────────────────────────────────────────── */
+.modal-backdrop {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.45); z-index:500;
+  align-items:center; justify-content:center;
+}
+.modal-backdrop.show { display:flex; }
+.modal-card {
+  background:#fff; border-radius:14px; padding:1.75rem;
+  width:90%; max-width:420px;
+  box-shadow:0 16px 48px rgba(0,0,0,.18);
+}
+.modal-card h3 {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.15rem; font-weight:800; margin-bottom:1rem; color:#1c1c2e;
+  display:flex; align-items:center; gap:0.4rem;
+}
+.modal-card h3 i { color:#f5a623; }
+
+/* Responsive */
+@media(max-width:768px){
+  .cf-grid-2, .cf-grid-3 { grid-template-columns:1fr; }
+  .cf-wrap { padding:1rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="back-bar">
+  <a href="{% url 'certificate_list' %}" class="back-btn"><i class="bi bi-arrow-left"></i> Certificates</a>
+</div>
+<div class="page-header">
+  <h1><i class="bi bi-award"></i> {{ page_title }}</h1>
+  <p>Fill in all fields — click Generate & Download to get the Word certificate</p>
+</div>
+
+<div class="cf-wrap">
+  {% if is_edit %}
+  <div class="cert-no-badge">
+    <i class="bi bi-hash"></i> Certificate No: {{ cert.certificate_number }}
+  </div>
+  {% endif %}
+
+  {% if prefilled_from %}
+  <div style="background:#fff8ec;border:1.5px solid #ffd980;border-left:4px solid #f5a623;border-radius:10px;padding:0.75rem 1.1rem;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;font-size:0.88rem;font-weight:600;color:#7a4f00;">
+    <i class="bi bi-magic" style="color:#f5a623;font-size:1rem;"></i>
+    Auto-filled from: <strong>{{ prefilled_from }}</strong> &mdash; review and complete the remaining fields before saving.
+  </div>
+  {% endif %}
+
+  <form method="post" id="certForm" action="{% if is_edit %}{% url 'certificate_edit' cert.pk %}{% else %}{% url 'certificate_create' %}{% endif %}">
+    {% csrf_token %}
+    {{ formset.management_form }}
+
+    <!-- ── CUSTOMER INFORMATION ────────────────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-header"><i class="bi bi-person-badge"></i> Customer Information</div>
+      <div class="cf-section-body">
+        <div class="cf-grid cf-grid-2">
+          <div class="cf-fg">
+            <label>Customer <span style="color:#e74c3c">*</span></label>
+            <div class="customer-row">
+              {{ form.customer }}
+              <button type="button" class="btn-add-customer" onclick="showCustomerModal()">
+                <i class="bi bi-plus-lg"></i> New
+              </button>
+              <button type="button" class="btn-remove-customer" id="btnRemoveCustomer" onclick="showRemoveModal()" title="Remove selected customer">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            {{ form.customer.errors }}
+          </div>
+          <div class="cf-fg">
+            <label>Address</label>
+            {{ form.address }}
+            {{ form.address.errors }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INSPECTION DETAILS ──────────────────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-header"><i class="bi bi-calendar-check"></i> Inspection Details</div>
+      <div class="cf-section-body">
+        <div class="cf-grid cf-grid-2">
+          <div class="cf-fg">
+            <label>Date of Inspection <span style="color:#e74c3c">*</span></label>
+            {{ form.date_of_inspection }}
+            {{ form.date_of_inspection.errors }}
+          </div>
+          <div class="cf-fg">
+            <label>Due Next Inspection <span style="color:#e74c3c">*</span></label>
+            {{ form.due_next_inspection }}
+            {{ form.due_next_inspection.errors }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EQUIPMENT INFORMATION ───────────────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-header"><i class="bi bi-gear"></i> Equipment Information</div>
+      <div class="cf-section-body">
+        <div class="cf-grid">
+          <div class="cf-fg full">
+            <label>Product Description <span style="color:#e74c3c">*</span></label>
+            {{ form.product_description }}
+            {{ form.product_description.errors }}
+          </div>
+          <div class="cf-fg">
+            <label>Capacity</label>
+            {{ form.capacity }}
+            {{ form.capacity.errors }}
+          </div>
+          <div class="cf-fg">
+            <label>Model Number</label>
+            {{ form.model_number }}
+            {{ form.model_number.errors }}
+          </div>
+          <div class="cf-fg">
+            <label>Serial Number</label>
+            {{ form.serial_number }}
+            {{ form.serial_number.errors }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TEST RESULTS ────────────────────────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-header"><i class="bi bi-activity"></i> Test Results</div>
+      <div class="cf-section-body">
+        <div class="cf-grid cf-grid-3">
+          <div class="cf-fg">
+            <label>Working Load Limits</label>
+            {{ form.working_load_limits }}
+            {{ form.working_load_limits.errors }}
+          </div>
+          <div class="cf-fg">
+            <label>Tested Load</label>
+            {{ form.tested_load }}
+            {{ form.tested_load.errors }}
+          </div>
+          <div class="cf-fg">
+            <label>Pressure Relief</label>
+            {{ form.pressure_relief }}
+            {{ form.pressure_relief.errors }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TEST EQUIPMENT ──────────────────────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-header"><i class="bi bi-tools"></i> Test Equipment</div>
+      <div class="cf-section-body">
+        <div class="eq-table-wrap">
+          <table class="eq-table" id="eqTable">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Capacity</th>
+                <th>Model No.</th>
+                <th>Serial No.</th>
+                <th>Part No.</th>
+                <th>Expiry Date</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="eqTableBody">
+              {% for eq_form in formset %}
+              <tr class="eq-row {% if eq_form.instance.pk is None and forloop.counter > 1 %}{% endif %}" data-index="{{ forloop.counter0 }}">
+                {% for hidden in eq_form.hidden_fields %}{{ hidden }}{% endfor %}
+                <td>{{ eq_form.description }}</td>
+                <td>{{ eq_form.capacity }}</td>
+                <td>{{ eq_form.model_no }}</td>
+                <td>{{ eq_form.serial_no }}</td>
+                <td>{{ eq_form.part_no }}</td>
+                <td>{{ eq_form.expiry_date }}</td>
+                <td class="del-col">
+                  {% if eq_form.instance.pk %}
+                    {{ eq_form.DELETE }}
+                    <button type="button" class="del-row-btn" title="Remove row" onclick="markDelete(this)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  {% else %}
+                    <button type="button" class="del-row-btn" title="Remove row" onclick="removeRow(this)">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-add-row" onclick="addEquipmentRow()">
+          <i class="bi bi-plus-lg"></i> Add Row
+        </button>
+      </div>
+    </div>
+
+    <!-- ── LOAD CELL CERTIFICATE ───────────────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-header"><i class="bi bi-patch-check"></i> Load Cell Certificate</div>
+      <div class="cf-section-body">
+        <div class="cf-fg">
+          <label>Load Cell Certificate Number</label>
+          <div class="lc-input-wrap">
+            {{ form.load_cell_certificate_number }}
+            <button type="button" class="lc-dropdown-btn" onclick="toggleLCList()" title="Choose from saved list">
+              <i class="bi bi-caret-down-fill"></i>
+            </button>
+          </div>
+          {{ form.load_cell_certificate_number.errors }}
+          <!-- Saved list panel -->
+          <div class="lc-list-panel" id="lcListPanel" style="display:none;">
+            <div class="lc-list-header">
+              <span>Saved Certificates</span>
+              <button type="button" class="lc-add-saved-btn" onclick="showAddToList()">
+                <i class="bi bi-plus-lg"></i> Add to List
+              </button>
+            </div>
+            <div class="lc-list-add-row" id="lcAddRow" style="display:none;">
+              <input type="text" id="lcNewInput" class="cert-input lc-new-input"
+                placeholder="Type cert number to save..." autocomplete="off"
+                style="flex:1;font-size:0.85rem;min-height:36px;"/>
+              <button type="button" class="lc-save-new-btn" onclick="saveToList()">
+                <i class="bi bi-check-lg"></i>
+              </button>
+            </div>
+            <ul class="lc-saved-list" id="lcSavedList">
+              {% for lc in lc_all_certs %}
+              <li>
+                <span class="lc-item-text" onclick="selectLCItem(this)">{{ lc.cert_number }}</span>
+                <button type="button" class="lc-remove-item-btn"
+                  onclick="removeFromList(this, '{{ lc.cert_number|escapejs }}')"
+                  title="Remove from list">
+                  <i class="bi bi-x"></i>
+                </button>
+              </li>
+              {% empty %}
+              <li class="lc-empty">No saved certificates yet.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+        <!-- ── WORK PERFORM ────────────────────────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-header"><i class="bi bi-file-text"></i> Work Perform</div>
+      <div class="cf-section-body">
+        <div class="cf-fg">
+          <label>Technician Notes / Work Performed</label>
+          {{ form.work_perform }}
+          {{ form.work_perform.errors }}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CERTIFICATION ───────────────────────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-header"><i class="bi bi-person-check"></i> Certification</div>
+      <div class="cf-section-body">
+        <div class="cf-grid cf-grid-2">
+          <div class="cf-fg">
+            <label>Technician Name <span style="color:#e74c3c">*</span></label>
+            {{ form.technician_name }}
+            {{ form.technician_name.errors }}
+          </div>
+          <div class="cf-fg">
+            <label>Date <span style="color:#e74c3c">*</span></label>
+            {{ form.technician_date }}
+            {{ form.technician_date.errors }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ACTIONS ─────────────────────────────────────── -->
+    <div class="cf-actions">
+      <button type="submit" name="action" value="save" class="btn-orange">
+        <i class="bi bi-save2-fill"></i>
+        {% if is_edit %}Save Changes{% else %}Save Certificate{% endif %}
+      </button>
+      {% if is_edit %}
+      <a href="{% url 'certificate_download' cert.pk %}" class="btn-orange" style="background:#28a745;color:#fff;" target="_blank">
+        <i class="bi bi-file-earmark-word-fill"></i> Download Word File
+      </a>
+      {% endif %}
+      <a href="{% url 'certificate_list' %}" class="btn-white">
+        <i class="bi bi-x-lg"></i> Cancel
+      </a>
+    </div>
+
+  </form>
+</div>
+
+<!-- ── REMOVE CUSTOMER MODAL ─────────────────────────────────────── -->
+<div class="modal-backdrop" id="removeCustomerModal">
+  <div class="modal-card">
+    <h3 class="modal-danger-title"><i class="bi bi-exclamation-triangle-fill"></i> Remove Customer?</h3>
+    <p style="color:#555;font-size:0.88rem;margin-bottom:1.25rem;">
+      Are you sure you want to delete <strong id="removeCustomerName">this customer</strong>?
+      <br><br>
+      <span style="color:#c0392b;font-size:0.82rem;">⚠ This will permanently delete the customer record. Certificates linked to this customer cannot be deleted.</span>
+    </p>
+    <div style="display:flex;gap:0.75rem;">
+      <button type="button" style="background:#e74c3c;color:#fff;border:none;border-radius:8px;padding:0.6rem 1.4rem;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;gap:0.4rem;" onclick="confirmRemoveCustomer()">
+        <i class="bi bi-trash"></i> Yes, Delete
+      </button>
+      <button type="button" class="btn-white" onclick="hideRemoveModal()">Cancel</button>
+    </div>
+    <div id="removeCustomerError" style="color:#c0392b;font-size:0.82rem;margin-top:0.5rem;display:none;"></div>
+  </div>
+</div>
+
+<!-- ── ADD CUSTOMER MODAL ────────────────────────────────────────── -->
+<div class="modal-backdrop" id="customerModal">
+  <div class="modal-card">
+    <h3><i class="bi bi-person-plus"></i> Add New Customer</h3>
+    <div class="cf-fg" style="margin-bottom:0.9rem;">
+      <label>Customer Name</label>
+      <input type="text" class="cert-input" id="newCustomerName" placeholder="e.g. Philippine Airlines"/>
+    </div>
+    <div class="cf-fg" style="margin-bottom:1.25rem;">
+      <label>Address</label>
+      <textarea class="cert-input" id="newCustomerAddress" rows="2" placeholder="Full address..."></textarea>
+    </div>
+    <div style="display:flex;gap:0.75rem;">
+      <button type="button" class="btn-orange" onclick="saveCustomer()">
+        <i class="bi bi-check-lg"></i> Save Customer
+      </button>
+      <button type="button" class="btn-white" onclick="hideCustomerModal()">Cancel</button>
+    </div>
+    <div id="customerModalError" style="color:#c0392b;font-size:0.82rem;margin-top:0.5rem;display:none;"></div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Auto-compute due date (date_of_inspection + 1 year) ───────────────────
+document.getElementById('id_date_of_inspection').addEventListener('change', function() {
+  const val = this.value;
+  if (!val) return;
+  const d = new Date(val);
+  d.setFullYear(d.getFullYear() + 1);
+  // Format as YYYY-MM-DD
+  const yyyy = d.getFullYear();
+  const mm   = String(d.getMonth() + 1).padStart(2, '0');
+  const dd   = String(d.getDate()).padStart(2, '0');
+  document.getElementById('id_due_next_inspection').value = `${yyyy}-${mm}-${dd}`;
+});
+
+// ── Customer auto-fill ─────────────────────────────────────────────────────
+document.getElementById('id_customer').addEventListener('change', function() {
+  const id = this.value;
+  if (!id) return;
+  fetch(`/api/customer-address/?id=${id}`)
+    .then(r => r.json())
+    .then(d => { document.getElementById('id_address').value = d.address || ''; });
+});
+
+// ── Customer modal ─────────────────────────────────────────────────────────
+function showCustomerModal() {
+  document.getElementById('customerModal').classList.add('show');
+  document.getElementById('newCustomerName').focus();
+}
+function hideCustomerModal() {
+  document.getElementById('customerModal').classList.remove('show');
+  document.getElementById('customerModalError').style.display = 'none';
+}
+function saveCustomer() {
+  const name    = document.getElementById('newCustomerName').value.trim();
+  const address = document.getElementById('newCustomerAddress').value.trim();
+  if (!name) {
+    document.getElementById('customerModalError').textContent = 'Customer name is required.';
+    document.getElementById('customerModalError').style.display = 'block';
+    return;
+  }
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('address', address);
+  fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+  fetch('/customers/new/', { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body:fd })
+    .then(r => r.json())
+    .then(data => {
+      const sel = document.getElementById('id_customer');
+      const opt = new Option(data.name, data.id, true, true);
+      sel.appendChild(opt);
+      sel.value = data.id;
+      document.getElementById('id_address').value = data.address || '';
+      hideCustomerModal();
+      document.getElementById('newCustomerName').value    = '';
+      document.getElementById('newCustomerAddress').value = '';
+    })
+    .catch(() => {
+      document.getElementById('customerModalError').textContent = 'Error saving customer. Please try again.';
+      document.getElementById('customerModalError').style.display = 'block';
+    });
+}
+document.getElementById('customerModal').addEventListener('click', function(e) {
+  if (e.target === this) hideCustomerModal();
+});
+
+// ── Remove Customer ────────────────────────────────────────────────────────
+function showRemoveModal() {
+  const sel = document.getElementById('id_customer');
+  if (!sel.value) {
+    alert('Please select a customer first.');
+    return;
+  }
+  const name = sel.options[sel.selectedIndex].text;
+  document.getElementById('removeCustomerName').textContent = name;
+  document.getElementById('removeCustomerError').style.display = 'none';
+  document.getElementById('removeCustomerModal').classList.add('show');
+}
+function hideRemoveModal() {
+  document.getElementById('removeCustomerModal').classList.remove('show');
+}
+function confirmRemoveCustomer() {
+  const sel = document.getElementById('id_customer');
+  const customerId = sel.value;
+  if (!customerId) return;
+
+  const fd = new FormData();
+  fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+  fetch(`/customers/${customerId}/delete/`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    body: fd
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      // Remove from dropdown
+      sel.remove(sel.selectedIndex);
+      sel.value = '';
+      document.getElementById('id_address').value = '';
+      hideRemoveModal();
+    } else {
+      document.getElementById('removeCustomerError').textContent = data.error || 'Cannot delete this customer.';
+      document.getElementById('removeCustomerError').style.display = 'block';
+    }
+  })
+  .catch(() => {
+    document.getElementById('removeCustomerError').textContent = 'Error deleting customer. Please try again.';
+    document.getElementById('removeCustomerError').style.display = 'block';
+  });
+}
+document.getElementById('removeCustomerModal').addEventListener('click', function(e) {
+  if (e.target === this) hideRemoveModal();
+});
+
+// ── Test equipment rows ────────────────────────────────────────────────────
+let totalForms = parseInt(document.getElementById('id_testequipmentrow_set-TOTAL_FORMS')?.value || '3');
+
+function addEquipmentRow() {
+  const tbody   = document.getElementById('eqTableBody');
+  const idx     = totalForms;
+  const prefix  = 'testequipmentrow_set';
+  const tr      = document.createElement('tr');
+  tr.className  = 'eq-row';
+  tr.dataset.index = idx;
+  tr.innerHTML = `
+    <td><input type="text" name="${prefix}-${idx}-description" class="tbl-input cert-input" placeholder="Description"/></td>
+    <td><input type="text" name="${prefix}-${idx}-capacity"    class="tbl-input cert-input" placeholder="Capacity"/></td>
+    <td><input type="text" name="${prefix}-${idx}-model_no"    class="tbl-input cert-input" placeholder="Model No."/></td>
+    <td><input type="text" name="${prefix}-${idx}-serial_no"   class="tbl-input cert-input" placeholder="Serial No."/></td>
+    <td><input type="text" name="${prefix}-${idx}-part_no"     class="tbl-input cert-input" placeholder="Part No."/></td>
+    <td><input type="text" name="${prefix}-${idx}-expiry_date" class="tbl-input cert-input" placeholder="Expiry Date"/></td>
+    <td class="del-col"><button type="button" class="del-row-btn" onclick="removeRow(this)"><i class="bi bi-x-lg"></i></button></td>
+  `;
+  tbody.appendChild(tr);
+  totalForms++;
+  document.getElementById('id_testequipmentrow_set-TOTAL_FORMS').value = totalForms;
+}
+
+function removeRow(btn) {
+  btn.closest('tr').remove();
+}
+
+function markDelete(btn) {
+  const row = btn.closest('tr');
+  const chk = row.querySelector('input[type=checkbox]');
+  if (chk) { chk.checked = true; }
+  row.style.opacity = '0.4';
+  row.style.textDecoration = 'line-through';
+  btn.disabled = true;
+}
+
+// ── Load Cell Certificate ─────────────────────────────────────────────────
+const LC_SAVE_URL   = "/api/loadcell-cert/save/";
+const LC_DELETE_URL = "/api/loadcell-cert/delete/";
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.lc-input-wrap') && !e.target.closest('#lcListPanel')) {
+    document.getElementById('lcListPanel').style.display = 'none';
+  }
+});
+
+function toggleLCList() {
+  const panel = document.getElementById('lcListPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function selectLCItem(span) {
+  // Find the actual input (Django renders it with id_load_cell_certificate_number)
+  const input = document.getElementById('id_load_cell_certificate_number');
+  if (input) input.value = span.textContent.trim();
+  document.getElementById('lcListPanel').style.display = 'none';
+}
+
+function showAddToList() {
+  const row = document.getElementById('lcAddRow');
+  row.style.display = row.style.display === 'none' ? 'flex' : 'none';
+  if (row.style.display === 'flex') document.getElementById('lcNewInput').focus();
+}
+
+function saveToList() {
+  const val = document.getElementById('lcNewInput').value.trim();
+  if (!val) return;
+  const fd = new FormData();
+  fd.append('cert_number', val);
+  fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  fetch(LC_SAVE_URL, {
+    method: 'POST',
+    headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken},
+    body: fd
+  })
+  .then(r => {
+    if (!r.ok) throw new Error('Server error: ' + r.status);
+    return r.json();
+  })
+  .then(data => {
+    if (data.error) { alert(data.error); return; }
+    const ul = document.getElementById('lcSavedList');
+    const empty = ul.querySelector('.lc-empty');
+    if (empty) empty.remove();
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span class="lc-item-text" onclick="selectLCItem(this)">${data.cert_number}</span>
+      <button type="button" class="lc-remove-item-btn" onclick="removeFromList(this,'${data.cert_number.replace(/'/g,"\'")}')">
+        <i class="bi bi-x"></i>
+      </button>`;
+    ul.appendChild(li);
+    document.getElementById('lcNewInput').value = '';
+    document.getElementById('lcAddRow').style.display = 'none';
+  })
+  .catch(err => {
+    console.error('Save error:', err);
+    alert('Error saving. Please try again.');
+  });
+}
+
+function removeFromList(btn, certNumber) {
+  const fd = new FormData();
+  fd.append('cert_number', certNumber);
+  fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+  const csrfToken2 = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  fetch(LC_DELETE_URL, {
+    method: 'POST',
+    headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken2},
+    body: fd
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) { alert(data.error); return; }
+    btn.closest('li').remove();
+    if (!document.querySelectorAll('#lcSavedList li').length) {
+      document.getElementById('lcSavedList').innerHTML = '<li class="lc-empty">No saved certificates yet.</li>';
+    }
+  })
+  .catch(err => {
+    console.error('Delete error:', err);
+    alert('Error removing. Please try again.');
+  });
+}
+</script>
+{% endblock %}

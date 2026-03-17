@@ -1,0 +1,1 @@
+web: gunicorn excelsior_system.wsgi

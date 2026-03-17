@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Inventory — Excelsior Aviation GSE{% endblock %}
+
+{% block content %}
+<div class="back-bar">
+  <a href="{% url 'dashboard' %}" class="back-btn"><i class="bi bi-arrow-left"></i> Dashboard</a>
+</div>
+<div class="page-header">
+  <h1><i class="bi bi-box-seam"></i> Inventory Record</h1>
+  <p>Track parts, equipment, and stock levels</p>
+</div>
+<div class="content-wrap">
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Customer Information -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-header"><i class="bi bi-person-badge"></i> Customer Information</div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Customer Name</label>
+            {{ form.customer_name }}
+            {{ form.customer_name.errors }}
+          </div>
+          <div class="form-group">
+            <label>Customer Address</label>
+            {{ form.customer_address }}
+            {{ form.customer_address.errors }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory Details -->
+    <div class="card">
+      <div class="card-header"><i class="bi bi-box-seam"></i> Inventory Details</div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Description</label>
+            {{ form.description }}{{ form.description.errors }}
+          </div>
+          <div class="form-group">
+            <label>Model Number</label>
+            {{ form.model_number }}{{ form.model_number.errors }}
+          </div>
+          <div class="form-group">
+            <label>Serial Number</label>
+            {{ form.serial_number }}{{ form.serial_number.errors }}
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            {{ form.location }}{{ form.location.errors }}
+          </div>
+          <div class="form-group">
+            <label>Quantity</label>
+            {{ form.quantity }}{{ form.quantity.errors }}
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Remarks</label>
+            {{ form.remarks }}{{ form.remarks.errors }}
+          </div>
+        </div>
+        <div style="margin-top:1.25rem;display:flex;gap:0.75rem;">
+          <button type="submit" class="btn-orange"><i class="bi bi-save2-fill"></i> Submit Record</button>
+          <button type="reset" class="btn-white"><i class="bi bi-arrow-counterclockwise"></i> Clear</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
