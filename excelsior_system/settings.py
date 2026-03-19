@@ -64,8 +64,9 @@ WSGI_APPLICATION = 'excelsior_system.wsgi.application'
 # Uses PostgreSQL on Render (via DATABASE_URL env var), SQLite locally
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
+        # This pulls the URL you just pasted into Render
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600
     )
 }
 

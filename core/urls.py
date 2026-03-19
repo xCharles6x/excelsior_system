@@ -29,6 +29,10 @@ urlpatterns = [
     path('delete/inventory/<int:pk>/', views.delete_inventory, name='delete_inventory'),
     path('delete/repair/<int:pk>/',    views.delete_repair,    name='delete_repair'),
 
+    # ✅ Download Excel Forms
+    path('download/repair/<int:pk>/',     views.download_repair_excel,     name='download_repair_excel'),
+    path('download/inventory/<int:pk>/',  views.download_inventory_excel,  name='download_inventory_excel'),
+
     # Certificates
     path('certificates/',                    views.certificate_list,     name='certificate_list'),
     path('certificates/new/',               views.certificate_create,   name='certificate_create'),
@@ -37,20 +41,20 @@ urlpatterns = [
     path('certificates/<int:pk>/delete/',   views.certificate_delete,   name='certificate_delete'),
 
     # Customers
-    path('customers/new/',          views.customer_create,       name='customer_create'),
-    path('customers/<int:pk>/delete/', views.customer_delete,       name='customer_delete'),
-    path('api/customer-address/',      views.customer_address_api,  name='customer_address_api'),
-    path('api/loadcell-cert/save/',    views.loadcell_cert_save,    name='loadcell_cert_save'),
-    path('api/loadcell-cert/delete/',  views.loadcell_cert_delete,  name='loadcell_cert_delete'),
+    path('customers/new/',             views.customer_create,      name='customer_create'),
+    path('customers/<int:pk>/delete/', views.customer_delete,      name='customer_delete'),
+    path('api/customer-address/',      views.customer_address_api, name='customer_address_api'),
+    path('api/loadcell-cert/save/',    views.loadcell_cert_save,   name='loadcell_cert_save'),
+    path('api/loadcell-cert/delete/',  views.loadcell_cert_delete, name='loadcell_cert_delete'),
 
     # Go to Certification (pre-fill from records)
     path('cert-from/loadtest/<int:pk>/',  views.cert_from_loadtest,  name='cert_from_loadtest'),
     path('cert-from/repair/<int:pk>/',    views.cert_from_repair,    name='cert_from_repair'),
     path('cert-from/inventory/<int:pk>/', views.cert_from_inventory, name='cert_from_inventory'),
 
-    # ── ADMIN: User / Account Management ─────────────────────────────────────
-    path('admin-panel/users/',                  views.admin_user_list,   name='admin_user_list'),
-    path('admin-panel/users/create/',           views.admin_user_create, name='admin_user_create'),
-    path('admin-panel/users/<int:pk>/edit/',    views.admin_user_edit,   name='admin_user_edit'),
-    path('admin-panel/users/<int:pk>/delete/',  views.admin_user_delete, name='admin_user_delete'),
+    # Admin: User / Account Management
+    path('admin-panel/users/',                 views.admin_user_list,   name='admin_user_list'),
+    path('admin-panel/users/create/',          views.admin_user_create, name='admin_user_create'),
+    path('admin-panel/users/<int:pk>/edit/',   views.admin_user_edit,   name='admin_user_edit'),
+    path('admin-panel/users/<int:pk>/delete/', views.admin_user_delete, name='admin_user_delete'),
 ]

@@ -9,6 +9,8 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 import io
+import os
+from django.conf import settings as django_settings
 
 from .models import LoadTest, Inventory, RepairInspection, Certificate, Customer, TestEquipmentRow, LoadCellCertRow, LoadCellSavedCert
 from .forms import (LoadTestForm, InventoryForm, RepairInspectionForm,
@@ -727,3 +729,31 @@ def cert_from_inventory(request, pk):
         'lc_all_certs': LoadCellSavedCert.objects.all(),
         'prefilled_from': f'Inventory record — {record.description or record.pk}',
     })
+@login_required
+def download_repair_excel(request, pk):
+    from .utils.repair_excel_generator import generate_repair_excel
+    record = get_object_or_404(RepairInspection, pk=pk)
+    logo_path = os.path.join(django_settings.BASE_DIR, 'core', 'static', 'img', 'logo.png')
+    sig_path  = os.path.join(django_settings.BASE_DIR, 'core', 'static', 'img', 'signature.png')
+    if not os.path.exists(logo_path): logo_path = None
+    if not os.path.exists(sig_path):  sig_path  = None
+    buf      = generate_repair_excel(record, logo_path, sig_path)
+    filename = f'Excelsior_{record.get_record_type_display()}_{record.report_number or record.pk}.xlsx'
+    response = HttpResponse(buf.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required
+def download_inventory_excel(request, pk):
+    from .utils.inventory_excel_generator import generate_inventory_excel
+    record = get_object_or_404(Inventory, pk=pk)
+    logo_path = os.path.join(django_settings.BASE_DIR, 'core', 'static', 'img', 'logo.png')
+    sig_path  = os.path.join(django_settings.BASE_DIR, 'core', 'static', 'img', 'signature.png')
+    if not os.path.exists(logo_path): logo_path = None
+    if not os.path.exists(sig_path):  sig_path  = None
+    buf      = generate_inventory_excel(record, logo_path, sig_path)
+    filename = f'Excelsior_Inventory_{record.serial_number or record.pk}.xlsx'
+    response = HttpResponse(buf.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
