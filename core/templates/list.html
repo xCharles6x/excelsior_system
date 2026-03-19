@@ -238,10 +238,20 @@
           <td><code>{{ r.model_number }}</code></td><td><code>{{ r.serial_number }}</code></td>
           <td>{{ r.report_number }}</td><td>{{ r.mechanic }}</td><td>{{ r.date }}</td>
           <td>
+            <div class="inputted-by">
+              {% if r.created_by %}
+                <span class="name">{{ r.created_by.get_full_name|default:r.created_by.username }}</span>
+                <span class="{% if r.created_by.is_staff %}badge-staff{% else %}badge-user{% endif %}">{% if r.created_by.is_staff %}Staff{% else %}User{% endif %}</span>
+                <span class="date"><i class="bi bi-calendar3"></i> {{ r.created_at|date:"M d, Y" }}</span>
+              {% else %}<span style="color:#bbb;font-size:.8rem;">—</span>{% endif %}
+            </div>
+          </td>
+          <td>
             <div class="action-btns">
               <a href="{% url 'edit_repair' r.pk %}" class="btn-act btn-edit"><i class="bi bi-pencil"></i> Edit</a>
               <a href="{% url 'edit_repair' r.pk %}" class="btn-act btn-view"><i class="bi bi-eye"></i> View</a>
               <a href="{% url 'cert_from_repair' r.pk %}" class="btn-act btn-generate"><i class="bi bi-award"></i> Go to Cert</a>
+              <a href="{% url 'download_repair_excel' r.pk %}" class="btn-act" style="background:#e8f5e9;color:#1a6e2e;border:1.5px solid #b7ecbf;"><i class="bi bi-file-earmark-excel-fill"></i> Forms</a>
               <button class="btn-act btn-delete" onclick="confirmDelete('{% url 'delete_repair' r.pk %}')"><i class="bi bi-trash"></i> Delete</button>
             </div>
           </td>
@@ -284,6 +294,7 @@
               <a href="{% url 'edit_inventory' r.pk %}" class="btn-act btn-edit"><i class="bi bi-pencil"></i> Edit</a>
               <a href="{% url 'edit_inventory' r.pk %}" class="btn-act btn-view"><i class="bi bi-eye"></i> View</a>
               <a href="{% url 'cert_from_inventory' r.pk %}" class="btn-act btn-generate"><i class="bi bi-award"></i> Go to Cert</a>
+              <a href="{% url 'download_inventory_excel' r.pk %}" class="btn-act" style="background:#e8f5e9;color:#1a6e2e;border:1.5px solid #b7ecbf;" title="Download MSR Form + Warranty Certificate"><i class="bi bi-file-earmark-excel-fill"></i> Forms</a>
               <button class="btn-act btn-delete" onclick="confirmDelete('{% url 'delete_inventory' r.pk %}')"><i class="bi bi-trash"></i> Delete</button>
             </div>
           </td>
