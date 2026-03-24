@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load warranty_tags %}
 {% block title %}Master List — Excelsior Aviation GSE{% endblock %}
 {% block extra_css %}
 <style>
@@ -62,6 +63,43 @@
   .records-table tbody tr:hover { background: #fff8ec; }
   .records-table tbody td { padding: 0.6rem 1rem; color: #1c1c2e; vertical-align: middle; }
 
+  /* Row highlight for expiring rows */
+  .records-table tbody tr.row-critical { background: #fff0f0; }
+  .records-table tbody tr.row-critical:hover { background: #ffe0e0; }
+  .records-table tbody tr.row-urgent  { background: #fff7f0; }
+  .records-table tbody tr.row-urgent:hover  { background: #ffeed8; }
+  .records-table tbody tr.row-warning { background: #fffdf0; }
+  .records-table tbody tr.row-warning:hover { background: #fff8d0; }
+
+  /* Warranty status badges */
+  .warranty-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    border-radius: 6px; padding: 0.2rem 0.55rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem; font-weight: 800;
+    white-space: nowrap; margin-top: 0.25rem;
+    letter-spacing: 0.3px;
+  }
+  .warranty-critical {
+    background: #ffe0e0; color: #b91c1c;
+    border: 1.5px solid #fca5a5;
+    animation: pulse-red 1.8s ease-in-out infinite;
+  }
+  .warranty-urgent {
+    background: #fff0e0; color: #c2410c;
+    border: 1.5px solid #fdba74;
+  }
+  .warranty-warning {
+    background: #fefce8; color: #854d0e;
+    border: 1.5px solid #fde047;
+  }
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(185,28,28,0.25); }
+    50%       { box-shadow: 0 0 0 4px rgba(185,28,28,0); }
+  }
+
+  .date-cell { display: flex; flex-direction: column; gap: 0.1rem; }
+
   .badge-repair    { background:#fff3cd;color:#9a6000;border-radius:6px;padding:.18rem .5rem;font-size:.72rem;font-weight:700;text-transform:uppercase; }
   .badge-inspection{ background:#e8f5e9;color:#1a6e2e;border-radius:6px;padding:.18rem .5rem;font-size:.72rem;font-weight:700;text-transform:uppercase; }
   .badge-staff { background:#fff3e0;color:#FF6B00;border:1px solid rgba(255,107,0,0.3);border-radius:6px;padding:.15rem .45rem;font-size:.70rem;font-weight:800;text-transform:uppercase; }
@@ -114,6 +152,14 @@
   .page-btn:hover { border-color:#f5a623;color:#d4891a;background:#fff8ec; }
   .page-btn.active { background:#f5a623;border-color:#f5a623;color:#1c1c2e; }
   .page-btn.disabled { color:#ccc;pointer-events:none; }
+
+  /* Warranty legend */
+  .warranty-legend {
+    display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+    padding: 0.5rem 1.25rem; background: #fafafa;
+    border-bottom: 1px solid #e8e9ec; font-size: 0.75rem; color: #555;
+  }
+  .warranty-legend span { font-weight: 700; color: #7a7f8c; }
 
   @media(max-width:768px){
     .filter-bar,.search-bar{padding:.6rem;gap:.4rem;}
@@ -171,6 +217,16 @@
   {% if search_query %} — filtered by "<strong>{{ search_query }}</strong>"{% endif %}
 </div>
 
+<!-- Warranty legend (only shown on Load Test tab) -->
+{% if record_type == 'loadtest' %}
+<div class="warranty-legend">
+  <span>Due Date Status:</span>
+  <span class="warranty-badge warranty-critical">🔴 Due Today / Due</span>
+  <span class="warranty-badge warranty-urgent">🟠 Within 7 days Due</span>
+  <span class="warranty-badge warranty-warning">🟡 Within 30 days Due</span>
+</div>
+{% endif %}
+
 <!-- Tables -->
 <div class="table-wrapper">
 
@@ -180,12 +236,14 @@
       <thead><tr>
         <th>#</th><th>Customer</th><th>Company</th><th>Description</th>
         <th>Model No.</th><th>Serial No.</th><th>Tested Load</th><th>Safe Load</th>
-        <th>Certificate No.</th><th>Mechanic</th><th>Date Inspection</th><th>Date Due</th>
+        <th>Certificate No.</th><th>Mechanic</th><th>Date Inspection</th>
+        <th>Date Due</th>
         <th>Inputted By</th><th>Actions</th>
       </tr></thead>
       <tbody>
         {% for r in loadtest_records %}
-        <tr>
+        {% warranty_status r.date_due as ws %}
+        <tr{% if ws %} class="row-{{ ws.level }}"{% endif %}>
           <td>{{ forloop.counter }}</td>
           <td><strong>{{ r.customer_name }}</strong><br><small style="color:#7a7f8c;">{{ r.customer_address }}</small></td>
           <td>{{ r.company }}</td><td>{{ r.description }}</td>
@@ -194,7 +252,15 @@
           <td>{{ r.safe_load }}</td>
           <td>{{ r.certificate_number }}</td>
           <td>{{ r.mechanic }}</td>
-          <td>{{ r.date_inspection }}</td><td>{{ r.date_due }}</td>
+          <td>{{ r.date_inspection }}</td>
+          <td>
+            <div class="date-cell">
+              <span>{{ r.date_due|default:"—" }}</span>
+              {% if ws %}
+                <span class="warranty-badge warranty-{{ ws.level }}">{{ ws.label }}</span>
+              {% endif %}
+            </div>
+          </td>
           <td>
             <div class="inputted-by">
               {% if r.created_by %}
@@ -310,11 +376,6 @@
 </div>
 
 <!-- Pagination -->
-{% with records=loadtest_records %}
-{% if record_type == 'repair' %}{% with records=repair_records %}{% endwith %}{% endif %}
-{% if record_type == 'inventory' %}{% with records=inventory_records %}{% endwith %}{% endif %}
-{% endwith %}
-
 {% with page_obj=loadtest_records %}
 {% if record_type == 'repair' %}{% with page_obj=repair_records %}
 {% if page_obj.has_other_pages %}
@@ -409,3 +470,4 @@ document.getElementById('deleteModal').addEventListener('click', function(e) {
 });
 </script>
 {% endblock %}
+

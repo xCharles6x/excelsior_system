@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load warranty_tags %}
 {% block title %}Certificates — Excelsior Aviation GSE{% endblock %}
 {% block extra_css %}
 <style>
@@ -36,6 +37,43 @@
   .cert-table tbody tr:hover { background:#fff8ec; }
   .cert-table tbody td { padding:0.6rem 1rem; color:#1c1c2e; vertical-align:middle; }
 
+  /* Row highlight for expiring certs */
+  .cert-table tbody tr.row-critical { background:#fff0f0; }
+  .cert-table tbody tr.row-critical:hover { background:#ffe0e0; }
+  .cert-table tbody tr.row-urgent  { background:#fff7f0; }
+  .cert-table tbody tr.row-urgent:hover  { background:#ffeed8; }
+  .cert-table tbody tr.row-warning { background:#fffdf0; }
+  .cert-table tbody tr.row-warning:hover { background:#fff8d0; }
+
+  /* Warranty status badges */
+  .warranty-badge {
+    display:inline-flex; align-items:center; gap:0.3rem;
+    border-radius:6px; padding:0.2rem 0.55rem;
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:0.75rem; font-weight:800;
+    white-space:nowrap; margin-top:0.25rem;
+    letter-spacing:0.3px;
+  }
+  .warranty-critical {
+    background:#ffe0e0; color:#b91c1c;
+    border:1.5px solid #fca5a5;
+    animation: pulse-red 1.8s ease-in-out infinite;
+  }
+  .warranty-urgent {
+    background:#fff0e0; color:#c2410c;
+    border:1.5px solid #fdba74;
+  }
+  .warranty-warning {
+    background:#fefce8; color:#854d0e;
+    border:1.5px solid #fde047;
+  }
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(185,28,28,0.25); }
+    50%       { box-shadow: 0 0 0 4px rgba(185,28,28,0); }
+  }
+
+  .date-cell { display:flex; flex-direction:column; gap:0.1rem; }
+
   .cert-no-tag {
     display:inline-block; background:#fff3cd; border:1px solid #ffc107;
     border-radius:6px; padding:0.15rem 0.5rem;
@@ -71,6 +109,14 @@
   .btn-del-confirm:hover { background:#c0392b; }
   .count-bar { padding:.45rem 1.25rem; background:#fff; border-bottom:1px solid #e8e9ec; font-size:.78rem; color:#7a7f8c; }
   .count-badge { background:#f5a623; color:#1c1c2e; border-radius:10px; padding:.15rem .5rem; font-size:.72rem; font-weight:800; }
+
+  /* Warranty legend */
+  .warranty-legend {
+    display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;
+    padding:0.5rem 1.25rem; background:#fafafa;
+    border-bottom:1px solid #e8e9ec; font-size:0.75rem; color:#555;
+  }
+  .warranty-legend span { font-weight:700; color:#7a7f8c; }
 </style>
 {% endblock %}
 
@@ -101,6 +147,14 @@
   {% if search_query %} — filtered by "<strong>{{ search_query }}</strong>"{% endif %}
 </div>
 
+<!-- Warranty legend -->
+<div class="warranty-legend">
+  <span>Due Date Status:</span>
+  <span class="warranty-badge warranty-critical">🔴 Due Today / Overdue</span>
+  <span class="warranty-badge warranty-urgent">🟠 Within 7 days</span>
+  <span class="warranty-badge warranty-warning">🟡 Within 30 days</span>
+</div>
+
 <div class="table-wrapper">
   {% if certificates %}
   <table class="cert-table">
@@ -118,13 +172,21 @@
     </thead>
     <tbody>
       {% for c in certificates %}
-      <tr>
+      {% warranty_status c.due_next_inspection as ws %}
+      <tr{% if ws %} class="row-{{ ws.level }}"{% endif %}>
         <td>{{ forloop.counter }}</td>
         <td><span class="cert-no-tag">{{ c.certificate_number }}</span></td>
         <td><strong>{{ c.customer.name }}</strong></td>
         <td>{{ c.product_description }}</td>
         <td>{{ c.date_of_inspection|date:"M d, Y" }}</td>
-        <td>{{ c.due_next_inspection|date:"M d, Y" }}</td>
+        <td>
+          <div class="date-cell">
+            <span>{{ c.due_next_inspection|date:"M d, Y" }}</span>
+            {% if ws %}
+              <span class="warranty-badge warranty-{{ ws.level }}">{{ ws.label }}</span>
+            {% endif %}
+          </div>
+        </td>
         <td>{{ c.technician_name }}</td>
         <td>
           <div class="action-btns">
