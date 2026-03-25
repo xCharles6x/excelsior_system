@@ -527,14 +527,12 @@ def loadcell_cert_delete(request):
 
 @admin_required
 def admin_user_list(request):
-    """Admin page: list all user accounts."""
     users = User.objects.all().order_by('username')
     return render(request, 'admin_users.html', {'users': users})
 
 
 @admin_required
 def admin_user_create(request):
-    """Admin page: create a new user account."""
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
         if form.is_valid():
@@ -555,13 +553,11 @@ def admin_user_create(request):
 
 @admin_required
 def admin_user_edit(request, pk):
-    """Admin page: edit an existing user account."""
     target = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
         form = CreateUserForm(request.POST, instance=target)
         if form.is_valid():
             user = form.save(commit=False)
-            # Only update password if a new one was provided
             new_pw = form.cleaned_data.get('password')
             if new_pw:
                 user.set_password(new_pw)
@@ -584,7 +580,6 @@ def admin_user_edit(request, pk):
 @admin_required
 @require_POST
 def admin_user_delete(request, pk):
-    """Admin: delete a user account."""
     target = get_object_or_404(User, pk=pk)
     if target == request.user:
         messages.error(request, 'You cannot delete your own account.')
@@ -593,6 +588,7 @@ def admin_user_delete(request, pk):
     target.delete()
     messages.success(request, f'Account "{username}" deleted.')
     return redirect('admin_user_list')
+
 
 @login_required
 @require_POST
@@ -607,7 +603,6 @@ def customer_delete(request, pk):
         name = customer.name
         customer.delete()
         return JsonResponse({'success': True, 'name': name})
-    # Non-AJAX fallback
     if customer.certificates.exists():
         messages.error(request, f'Cannot delete "{customer.name}" - they have existing certificates.')
         return redirect('certificate_create')
@@ -621,40 +616,32 @@ def customer_delete(request, pk):
 
 @login_required
 def cert_from_loadtest(request, pk):
-    """Pre-fill certificate form using LoadTest record data."""
     record = get_object_or_404(LoadTest, pk=pk)
-
-    # Find or create Customer
     customer = None
     if record.customer_name:
         customer, _ = Customer.objects.get_or_create(
             name=record.customer_name,
             defaults={'address': record.customer_address or ''}
         )
-
     initial = {
-        'customer':           customer.pk if customer else None,
-        'address':            record.customer_address or '',
+        'customer':            customer.pk if customer else None,
+        'address':             record.customer_address or '',
         'product_description': record.description or '',
-        'capacity':           record.safe_load or '',
-        'model_number':       record.model_number or '',
-        'serial_number':      record.serial_number or '',
-        'tested_load':        record.tested_load or '',
+        'capacity':            record.safe_load or '',
+        'model_number':        record.model_number or '',
+        'serial_number':       record.serial_number or '',
+        'tested_load':         record.tested_load or '',
         'working_load_limits': record.safe_load or '',
-        'date_of_inspection': record.date_inspection or '',
+        'date_of_inspection':  record.date_inspection or '',
         'due_next_inspection': record.date_due or '',
-        'technician_name':    record.mechanic or '',
+        'technician_name':     record.mechanic or '',
     }
-
     form       = CertificateForm(initial=initial)
     formset    = TestEquipmentFormSet()
     lc_formset = LoadCellCertFormSet()
     return render(request, 'certificate_form.html', {
-        'form':       form,
-        'formset':    formset,
-        'lc_formset': lc_formset,
-        'page_title': 'New Certificate',
-        'is_edit':    False,
+        'form': form, 'formset': formset, 'lc_formset': lc_formset,
+        'page_title': 'New Certificate', 'is_edit': False,
         'lc_all_certs': LoadCellSavedCert.objects.all(),
         'prefilled_from': f'Load Test record — {record.description or record.pk}',
     })
@@ -662,16 +649,13 @@ def cert_from_loadtest(request, pk):
 
 @login_required
 def cert_from_repair(request, pk):
-    """Pre-fill certificate form using Repair/Inspection record data."""
     record = get_object_or_404(RepairInspection, pk=pk)
-
     customer = None
     if record.customer_name:
         customer, _ = Customer.objects.get_or_create(
             name=record.customer_name,
             defaults={'address': record.customer_address or ''}
         )
-
     initial = {
         'customer':            customer.pk if customer else None,
         'address':             record.customer_address or '',
@@ -681,16 +665,12 @@ def cert_from_repair(request, pk):
         'date_of_inspection':  record.date or '',
         'technician_name':     record.mechanic or '',
     }
-
     form       = CertificateForm(initial=initial)
     formset    = TestEquipmentFormSet()
     lc_formset = LoadCellCertFormSet()
     return render(request, 'certificate_form.html', {
-        'form':       form,
-        'formset':    formset,
-        'lc_formset': lc_formset,
-        'page_title': 'New Certificate',
-        'is_edit':    False,
+        'form': form, 'formset': formset, 'lc_formset': lc_formset,
+        'page_title': 'New Certificate', 'is_edit': False,
         'lc_all_certs': LoadCellSavedCert.objects.all(),
         'prefilled_from': f'{record.get_record_type_display()} record — {record.description or record.pk}',
     })
@@ -698,16 +678,13 @@ def cert_from_repair(request, pk):
 
 @login_required
 def cert_from_inventory(request, pk):
-    """Pre-fill certificate form using Inventory record data."""
     record = get_object_or_404(Inventory, pk=pk)
-
     customer = None
     if record.customer_name:
         customer, _ = Customer.objects.get_or_create(
             name=record.customer_name,
             defaults={'address': record.customer_address or ''}
         )
-
     initial = {
         'customer':            customer.pk if customer else None,
         'address':             record.customer_address or '',
@@ -716,23 +693,21 @@ def cert_from_inventory(request, pk):
         'serial_number':       record.serial_number or '',
         'capacity':            str(record.quantity) if record.quantity else '',
     }
-
     form       = CertificateForm(initial=initial)
     formset    = TestEquipmentFormSet()
     lc_formset = LoadCellCertFormSet()
     return render(request, 'certificate_form.html', {
-        'form':       form,
-        'formset':    formset,
-        'lc_formset': lc_formset,
-        'page_title': 'New Certificate',
-        'is_edit':    False,
+        'form': form, 'formset': formset, 'lc_formset': lc_formset,
+        'page_title': 'New Certificate', 'is_edit': False,
         'lc_all_certs': LoadCellSavedCert.objects.all(),
         'prefilled_from': f'Inventory record — {record.description or record.pk}',
     })
+
+
 @login_required
 def download_repair_excel(request, pk):
     from .utils.repair_excel_generator import generate_repair_excel
-    record = get_object_or_404(RepairInspection, pk=pk)
+    record    = get_object_or_404(RepairInspection, pk=pk)
     logo_path = os.path.join(django_settings.BASE_DIR, 'core', 'static', 'img', 'logo.png')
     sig_path  = os.path.join(django_settings.BASE_DIR, 'core', 'static', 'img', 'signature.png')
     if not os.path.exists(logo_path): logo_path = None
@@ -747,7 +722,7 @@ def download_repair_excel(request, pk):
 @login_required
 def download_inventory_excel(request, pk):
     from .utils.inventory_excel_generator import generate_inventory_excel
-    record = get_object_or_404(Inventory, pk=pk)
+    record    = get_object_or_404(Inventory, pk=pk)
     logo_path = os.path.join(django_settings.BASE_DIR, 'core', 'static', 'img', 'logo.png')
     sig_path  = os.path.join(django_settings.BASE_DIR, 'core', 'static', 'img', 'signature.png')
     if not os.path.exists(logo_path): logo_path = None
@@ -757,3 +732,70 @@ def download_inventory_excel(request, pk):
     response = HttpResponse(buf.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+# ── AUTOCOMPLETE API ──────────────────────────────────────────────────────────
+
+@login_required
+def autocomplete_api(request):
+    """
+    Returns distinct field value suggestions from past records.
+    Query params: field, q (search term), model (loadtest/repair/inventory/all)
+    """
+    field = request.GET.get('field', '').strip()
+    q     = request.GET.get('q', '').strip()
+    model = request.GET.get('model', 'all')
+
+    ALLOWED_FIELDS = {
+        'loadtest': [
+            'customer_name', 'customer_address', 'company', 'description',
+            'model_number', 'serial_number', 'equipment',
+            'tested_load', 'safe_load', 'certificate_number', 'mechanic',
+        ],
+        'repair': [
+            'customer_name', 'customer_address', 'company', 'description',
+            'model_number', 'serial_number', 'report_number', 'mechanic',
+        ],
+        'inventory': [
+            'customer_name', 'customer_address', 'description',
+            'model_number', 'serial_number', 'location',
+        ],
+    }
+
+    # Validate field is in the allowed list
+    allowed = set()
+    for v in ALLOWED_FIELDS.values():
+        allowed.update(v)
+    if field not in allowed:
+        return JsonResponse({'results': []})
+
+    results = set()
+
+    def fetch(qs, f):
+        lookup  = {f'{f}__icontains': q} if q else {}
+        exclude = {f'{f}': ''}
+        return (
+            qs.filter(**lookup)
+              .exclude(**exclude)
+              .values_list(f, flat=True)
+              .distinct()
+              .order_by(f)[:20]
+        )
+
+    try:
+        if model in ('loadtest', 'all') and field in ALLOWED_FIELDS['loadtest']:
+            results.update(fetch(LoadTest.objects.all(), field))
+        if model in ('repair', 'all') and field in ALLOWED_FIELDS['repair']:
+            results.update(fetch(RepairInspection.objects.all(), field))
+        if model in ('inventory', 'all') and field in ALLOWED_FIELDS['inventory']:
+            results.update(fetch(Inventory.objects.all(), field))
+    except Exception:
+        return JsonResponse({'results': []})
+
+    # Sort: exact prefix matches first, then alphabetical
+    final = sorted(
+        [r for r in results if r and (q.lower() in r.lower() if q else True)],
+        key=lambda x: (not x.lower().startswith(q.lower()), x.lower())
+    )[:15]
+
+    return JsonResponse({'results': final})

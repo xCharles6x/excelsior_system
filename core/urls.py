@@ -29,7 +29,7 @@ urlpatterns = [
     path('delete/inventory/<int:pk>/', views.delete_inventory, name='delete_inventory'),
     path('delete/repair/<int:pk>/',    views.delete_repair,    name='delete_repair'),
 
-    # ✅ Download Excel Forms
+    # Download Excel Forms
     path('download/repair/<int:pk>/',     views.download_repair_excel,     name='download_repair_excel'),
     path('download/inventory/<int:pk>/',  views.download_inventory_excel,  name='download_inventory_excel'),
 
@@ -46,6 +46,9 @@ urlpatterns = [
     path('api/customer-address/',      views.customer_address_api, name='customer_address_api'),
     path('api/loadcell-cert/save/',    views.loadcell_cert_save,   name='loadcell_cert_save'),
     path('api/loadcell-cert/delete/',  views.loadcell_cert_delete, name='loadcell_cert_delete'),
+
+    # ✅ Autocomplete API
+    path('api/autocomplete/',          views.autocomplete_api,     name='autocomplete_api'),
 
     # Go to Certification (pre-fill from records)
     path('cert-from/loadtest/<int:pk>/',  views.cert_from_loadtest,  name='cert_from_loadtest'),

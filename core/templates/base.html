@@ -1,9 +1,20 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}Excelsior Aviation GSE{% endblock %}</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#FF6B00"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Excelsior"/>
+  <meta name="description" content="Excelsior Aviation GSE Record Management System"/>
+  <link rel="manifest" href="{% static 'manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'img/logo.png' %}"/>
+
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
   <style>
@@ -142,16 +153,12 @@
       to   { transform: translateX(0);    opacity: 1; }
     }
     .alert-success {
-      background: #fff;
-      color: #166534;
-      border: 1.5px solid #bbf7d0;
-      border-left: 4px solid #22c55e;
+      background: #fff; color: #166534;
+      border: 1.5px solid #bbf7d0; border-left: 4px solid #22c55e;
     }
     .alert-error {
-      background: #fff;
-      color: #991b1b;
-      border: 1.5px solid #fca5a5;
-      border-left: 4px solid #ef4444;
+      background: #fff; color: #991b1b;
+      border: 1.5px solid #fca5a5; border-left: 4px solid #ef4444;
     }
 
     /* CONTENT */
@@ -235,6 +242,37 @@
     }
     .btn-black:hover { background: var(--neon-hot); }
 
+    /* PWA Install Banner */
+    #pwa-install-banner {
+      display: none; position: fixed; bottom: 1.25rem; left: 50%;
+      transform: translateX(-50%); z-index: 9999;
+      background: #1A0A00; color: #fff;
+      border: 1.5px solid #FF6B00; border-radius: 12px;
+      padding: 0.85rem 1.25rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      display: none; align-items: center; gap: 0.75rem;
+      font-family: 'Rajdhani', sans-serif; font-weight: 600;
+      font-size: 0.9rem; white-space: nowrap;
+      max-width: calc(100vw - 2.5rem);
+    }
+    #pwa-install-banner.show { display: flex; }
+    #pwa-install-banner .pwa-icon { font-size: 1.4rem; color: #FF6B00; flex-shrink: 0; }
+    #pwa-install-banner .pwa-text { flex: 1; }
+    #pwa-install-banner .pwa-text strong { display: block; color: #FF8C00; }
+    #pwa-install-banner .pwa-text span { font-size: 0.78rem; color: #ccc; }
+    .btn-pwa-install {
+      background: #FF6B00; color: #fff; border: none; border-radius: 8px;
+      font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.82rem;
+      padding: 0.45rem 1rem; cursor: pointer; white-space: nowrap;
+      transition: background 0.18s;
+    }
+    .btn-pwa-install:hover { background: #FF4500; }
+    .btn-pwa-dismiss {
+      background: none; border: none; color: #888; cursor: pointer;
+      font-size: 1.1rem; padding: 0.2rem; line-height: 1; flex-shrink: 0;
+    }
+    .btn-pwa-dismiss:hover { color: #fff; }
+
     /* RESPONSIVE */
     @media (max-width: 900px) { .nav-links a { padding: 0.35rem 0.5rem; font-size: 0.7rem; } .nav-links a i { display: none; } }
     @media (max-width: 768px) {
@@ -303,7 +341,22 @@
 {% block content %}{% endblock %}
 {% block extra_js %}{% endblock %}
 
+<!-- Smart Autocomplete (loaded on every page) -->
+<script src="{% static 'js/autocomplete.js' %}"></script>
+
+<!-- PWA Install Banner -->
+<div id="pwa-install-banner">
+  <i class="bi bi-box-arrow-down pwa-icon"></i>
+  <div class="pwa-text">
+    <strong>Install Excelsior App</strong>
+    <span>Add to your desktop for quick access</span>
+  </div>
+  <button class="btn-pwa-install" id="pwa-install-btn">Install</button>
+  <button class="btn-pwa-dismiss" id="pwa-dismiss-btn" title="Dismiss">✕</button>
+</div>
+
 <script>
+  // Navbar toggle
   const toggle = document.getElementById('navToggle');
   const drawer = document.getElementById('navDrawer');
   if (toggle && drawer) {
@@ -316,6 +369,7 @@
       toggle.querySelector('i').className = 'bi bi-list';
     }));
   }
+
   // Auto-dismiss notifications after 4 seconds
   document.querySelectorAll('.alert').forEach(function(el) {
     setTimeout(function() {
@@ -324,6 +378,55 @@
       el.style.transform = 'translateX(100%)';
       setTimeout(function() { el.remove(); }, 500);
     }, 4000);
+  });
+
+  // PWA Service Worker Registration
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/static/sw.js')
+        .then(reg => console.log('SW registered:', reg.scope))
+        .catch(err => console.log('SW registration failed:', err));
+    });
+  }
+
+  // PWA Install Prompt
+  let deferredPrompt;
+  const banner = document.getElementById('pwa-install-banner');
+  const installBtn = document.getElementById('pwa-install-btn');
+  const dismissBtn = document.getElementById('pwa-dismiss-btn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Show banner only if not dismissed before
+    if (!localStorage.getItem('pwa-dismissed')) {
+      banner.classList.add('show');
+    }
+  });
+
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      banner.classList.remove('show');
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('PWA install outcome:', outcome);
+        deferredPrompt = null;
+      }
+    });
+  }
+
+  if (dismissBtn) {
+    dismissBtn.addEventListener('click', () => {
+      banner.classList.remove('show');
+      localStorage.setItem('pwa-dismissed', '1');
+    });
+  }
+
+  // Hide banner if already installed
+  window.addEventListener('appinstalled', () => {
+    banner.classList.remove('show');
+    console.log('PWA installed successfully!');
   });
 </script>
 </body>

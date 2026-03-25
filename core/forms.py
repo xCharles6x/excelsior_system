@@ -7,6 +7,20 @@ W  = {'class': 'form-control'}
 WD = {'class': 'form-control', 'type': 'date'}
 WT = {'class': 'form-control', 'rows': 3}
 
+# Autocomplete widget helpers
+def ac(field, model, extra=None):
+    """Returns attrs dict for a text input with autocomplete enabled."""
+    attrs = {
+        'class': 'form-control',
+        'data-autocomplete': 'true',
+        'data-ac-field': field,
+        'data-ac-model': model,
+        'autocomplete': 'off',
+    }
+    if extra:
+        attrs.update(extra)
+    return attrs
+
 
 class CustomerForm(forms.ModelForm):
     class Meta:
@@ -30,17 +44,17 @@ class LoadTestForm(forms.ModelForm):
             'mechanic', 'date_inspection', 'date_due', 'remark',
         ]
         widgets = {
-            'customer_name':      forms.TextInput(attrs={**W, 'placeholder': 'e.g. Philippine Airlines'}),
-            'customer_address':   forms.TextInput(attrs={**W, 'placeholder': 'e.g. NAIA Terminal 2, Pasay City'}),
-            'company':            forms.TextInput(attrs=W),
-            'description':        forms.TextInput(attrs=W),
-            'model_number':       forms.TextInput(attrs=W),
-            'serial_number':      forms.TextInput(attrs=W),
-            'equipment':          forms.TextInput(attrs=W),
-            'tested_load':        forms.TextInput(attrs=W),
-            'safe_load':          forms.TextInput(attrs=W),
-            'certificate_number': forms.TextInput(attrs=W),
-            'mechanic':           forms.TextInput(attrs=W),
+            'customer_name':      forms.TextInput(attrs=ac('customer_name', 'all', {'placeholder': 'e.g. Philippine Airlines'})),
+            'customer_address':   forms.TextInput(attrs=ac('customer_address', 'all', {'placeholder': 'e.g. NAIA Terminal 2, Pasay City'})),
+            'company':            forms.TextInput(attrs=ac('company', 'loadtest')),
+            'description':        forms.TextInput(attrs=ac('description', 'loadtest')),
+            'model_number':       forms.TextInput(attrs=ac('model_number', 'all')),
+            'serial_number':      forms.TextInput(attrs=ac('serial_number', 'all')),
+            'equipment':          forms.TextInput(attrs=ac('equipment', 'loadtest')),
+            'tested_load':        forms.TextInput(attrs=ac('tested_load', 'loadtest')),
+            'safe_load':          forms.TextInput(attrs=ac('safe_load', 'loadtest')),
+            'certificate_number': forms.TextInput(attrs=ac('certificate_number', 'loadtest')),
+            'mechanic':           forms.TextInput(attrs=ac('mechanic', 'all')),
             'date_inspection':    forms.DateInput(attrs=WD),
             'date_due':           forms.DateInput(attrs=WD),
             'remark':             forms.Textarea(attrs=WT),
@@ -58,12 +72,12 @@ class InventoryForm(forms.ModelForm):
             'location', 'quantity', 'remarks',
         ]
         widgets = {
-            'customer_name':    forms.TextInput(attrs={**W, 'placeholder': 'e.g. Philippine Airlines'}),
-            'customer_address': forms.TextInput(attrs={**W, 'placeholder': 'e.g. NAIA Terminal 2, Pasay City'}),
-            'description':      forms.TextInput(attrs=W),
-            'model_number':     forms.TextInput(attrs=W),
-            'serial_number':    forms.TextInput(attrs=W),
-            'location':         forms.TextInput(attrs=W),
+            'customer_name':    forms.TextInput(attrs=ac('customer_name', 'all', {'placeholder': 'e.g. Philippine Airlines'})),
+            'customer_address': forms.TextInput(attrs=ac('customer_address', 'all', {'placeholder': 'e.g. NAIA Terminal 2, Pasay City'})),
+            'description':      forms.TextInput(attrs=ac('description', 'inventory')),
+            'model_number':     forms.TextInput(attrs=ac('model_number', 'all')),
+            'serial_number':    forms.TextInput(attrs=ac('serial_number', 'all')),
+            'location':         forms.TextInput(attrs=ac('location', 'inventory')),
             'quantity':         forms.NumberInput(attrs=W),
             'remarks':          forms.Textarea(attrs=WT),
         }
@@ -82,15 +96,15 @@ class RepairInspectionForm(forms.ModelForm):
             'customer_report', 'diagnose_result', 'remarks',
         ]
         widgets = {
-            'customer_name':    forms.TextInput(attrs={**W, 'placeholder': 'e.g. Philippine Airlines'}),
-            'customer_address': forms.TextInput(attrs={**W, 'placeholder': 'e.g. NAIA Terminal 2, Pasay City'}),
+            'customer_name':    forms.TextInput(attrs=ac('customer_name', 'all', {'placeholder': 'e.g. Philippine Airlines'})),
+            'customer_address': forms.TextInput(attrs=ac('customer_address', 'all', {'placeholder': 'e.g. NAIA Terminal 2, Pasay City'})),
             'record_type':      forms.Select(attrs=W),
-            'company':          forms.TextInput(attrs=W),
-            'description':      forms.TextInput(attrs=W),
-            'model_number':     forms.TextInput(attrs=W),
-            'serial_number':    forms.TextInput(attrs=W),
-            'report_number':    forms.TextInput(attrs=W),
-            'mechanic':         forms.TextInput(attrs=W),
+            'company':          forms.TextInput(attrs=ac('company', 'repair')),
+            'description':      forms.TextInput(attrs=ac('description', 'repair')),
+            'model_number':     forms.TextInput(attrs=ac('model_number', 'all')),
+            'serial_number':    forms.TextInput(attrs=ac('serial_number', 'all')),
+            'report_number':    forms.TextInput(attrs=ac('report_number', 'repair')),
+            'mechanic':         forms.TextInput(attrs=ac('mechanic', 'all')),
             'date':             forms.DateInput(attrs=WD),
             'customer_report':  forms.Textarea(attrs=WT),
             'diagnose_result':  forms.Textarea(attrs=WT),
@@ -127,7 +141,7 @@ class CertificateForm(forms.ModelForm):
             'pressure_relief':               forms.TextInput(attrs=W),
             'load_cell_certificate_number':  forms.TextInput(attrs=W),
             'work_perform':                  forms.Textarea(attrs={**W, 'rows': 5}),
-            'technician_name':               forms.TextInput(attrs=W),
+            'technician_name':               forms.TextInput(attrs=ac('mechanic', 'all')),
             'technician_date':               forms.DateInput(attrs=WD),
         }
 
@@ -174,10 +188,6 @@ LoadCellCertFormSet = inlineformset_factory(
 # ── USER / ACCOUNT MANAGEMENT (ADMIN ONLY) ───────────────────────────────────
 
 class CreateUserForm(forms.ModelForm):
-    """
-    Form for admin to create or edit a user account.
-    Password is optional on edit — leave blank to keep existing password.
-    """
     password = forms.CharField(
         required=False,
         widget=forms.PasswordInput(attrs={**W, 'placeholder': 'Leave blank to keep current password'}),
@@ -207,12 +217,8 @@ class CreateUserForm(forms.ModelForm):
         cleaned = super().clean()
         pw  = cleaned.get('password')
         cpw = cleaned.get('confirm_password')
-
-        # If this is a new user (no pk yet), password is required
         if not self.instance.pk and not pw:
             self.add_error('password', 'Password is required for new accounts.')
-
         if pw and pw != cpw:
             self.add_error('confirm_password', 'Passwords do not match.')
-
         return cleaned
