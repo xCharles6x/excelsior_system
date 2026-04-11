@@ -101,6 +101,12 @@
       <i class="bi bi-arrow-right card-arrow"></i>
     </a>
 
+    <a href="{% url 'photo_gallery' %}" class="dash-card" style="border-color:#d0eaff;background:#f5faff;">
+      <div class="dash-card-icon" style="background:#e8f4ff;border-color:#b3d9ff;color:#1a6fbb;"><i class="bi bi-images"></i></div>
+      <div><h3>Photo Gallery</h3><p>Browse all uploaded equipment photos</p></div>
+      <i class="bi bi-arrow-right card-arrow"></i>
+    </a>
+
     {% if user.is_staff %}
     <a href="{% url 'admin_user_list' %}" class="dash-card" style="border-color:#ffd980;background:#fffcf3;">
       <div class="dash-card-icon" style="background:#fff8ec;border-color:#ffd980;color:#d4891a;"><i class="bi bi-shield-lock-fill"></i></div>

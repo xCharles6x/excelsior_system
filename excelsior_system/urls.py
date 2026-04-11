@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from django.conf import settings
+from django.conf.urls.static import static
 
-# optional: home view to redirect based on authentication
 def home(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -10,6 +11,9 @@ def home(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home, name='home'),         # root redirect
-    path('', include('core.urls')),      # include all app URLs
+    path('', home, name='home'),
+    path('', include('core.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

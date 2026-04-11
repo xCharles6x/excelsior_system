@@ -1,15 +1,14 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.forms import inlineformset_factory
-from .models import Certificate, Customer, TestEquipmentRow, LoadCellCertRow, LoadTest, Inventory, RepairInspection
+from .models import (Certificate, Customer, TestEquipmentRow, LoadCellCertRow,
+                     LoadTest, Inventory, RepairInspection, PhotoReference)
 
 W  = {'class': 'form-control'}
 WD = {'class': 'form-control', 'type': 'date'}
 WT = {'class': 'form-control', 'rows': 3}
 
-# Autocomplete widget helpers
 def ac(field, model, extra=None):
-    """Returns attrs dict for a text input with autocomplete enabled."""
     attrs = {
         'class': 'form-control',
         'data-autocomplete': 'true',
@@ -39,15 +38,15 @@ class LoadTestForm(forms.ModelForm):
         model  = LoadTest
         fields = [
             'customer_name', 'customer_address',
-            'company', 'description', 'model_number', 'serial_number',
+            'description', 'capacity', 'model_number', 'serial_number',
             'equipment', 'tested_load', 'safe_load', 'certificate_number',
             'mechanic', 'date_inspection', 'date_due', 'remark',
         ]
         widgets = {
             'customer_name':      forms.TextInput(attrs=ac('customer_name', 'all', {'placeholder': 'e.g. Philippine Airlines'})),
             'customer_address':   forms.TextInput(attrs=ac('customer_address', 'all', {'placeholder': 'e.g. NAIA Terminal 2, Pasay City'})),
-            'company':            forms.TextInput(attrs=ac('company', 'loadtest')),
             'description':        forms.TextInput(attrs=ac('description', 'loadtest')),
+            'capacity':           forms.TextInput(attrs=ac('capacity', 'loadtest', {'placeholder': 'e.g. 5,000 lbs'})),
             'model_number':       forms.TextInput(attrs=ac('model_number', 'all')),
             'serial_number':      forms.TextInput(attrs=ac('serial_number', 'all')),
             'equipment':          forms.TextInput(attrs=ac('equipment', 'loadtest')),
@@ -68,13 +67,14 @@ class InventoryForm(forms.ModelForm):
         model  = Inventory
         fields = [
             'customer_name', 'customer_address',
-            'description', 'model_number', 'serial_number',
+            'description', 'capacity', 'model_number', 'serial_number',
             'location', 'quantity', 'remarks',
         ]
         widgets = {
             'customer_name':    forms.TextInput(attrs=ac('customer_name', 'all', {'placeholder': 'e.g. Philippine Airlines'})),
             'customer_address': forms.TextInput(attrs=ac('customer_address', 'all', {'placeholder': 'e.g. NAIA Terminal 2, Pasay City'})),
             'description':      forms.TextInput(attrs=ac('description', 'inventory')),
+            'capacity':         forms.TextInput(attrs=ac('capacity', 'inventory', {'placeholder': 'e.g. 10,000 lbs'})),
             'model_number':     forms.TextInput(attrs=ac('model_number', 'all')),
             'serial_number':    forms.TextInput(attrs=ac('serial_number', 'all')),
             'location':         forms.TextInput(attrs=ac('location', 'inventory')),
@@ -83,14 +83,14 @@ class InventoryForm(forms.ModelForm):
         }
 
 
-# ── REPAIR / INSPECTION ──────────────────────────────────────────────────────
+# ── REPAIR / INSPECTION ───────────────────────────────────────────────────────
 
 class RepairInspectionForm(forms.ModelForm):
     class Meta:
         model  = RepairInspection
         fields = [
             'customer_name', 'customer_address',
-            'record_type', 'company', 'description',
+            'record_type', 'description', 'capacity',
             'model_number', 'serial_number',
             'report_number', 'mechanic', 'date',
             'customer_report', 'diagnose_result', 'remarks',
@@ -99,8 +99,8 @@ class RepairInspectionForm(forms.ModelForm):
             'customer_name':    forms.TextInput(attrs=ac('customer_name', 'all', {'placeholder': 'e.g. Philippine Airlines'})),
             'customer_address': forms.TextInput(attrs=ac('customer_address', 'all', {'placeholder': 'e.g. NAIA Terminal 2, Pasay City'})),
             'record_type':      forms.Select(attrs=W),
-            'company':          forms.TextInput(attrs=ac('company', 'repair')),
             'description':      forms.TextInput(attrs=ac('description', 'repair')),
+            'capacity':         forms.TextInput(attrs=ac('capacity', 'repair', {'placeholder': 'e.g. 3,000 lbs'})),
             'model_number':     forms.TextInput(attrs=ac('model_number', 'all')),
             'serial_number':    forms.TextInput(attrs=ac('serial_number', 'all')),
             'report_number':    forms.TextInput(attrs=ac('report_number', 'repair')),
@@ -162,8 +162,6 @@ TestEquipmentFormSet = inlineformset_factory(
 )
 
 
-# ── LOAD CELL CERTIFICATE ROW ────────────────────────────────────────────────
-
 class LoadCellCertRowForm(forms.ModelForm):
     class Meta:
         model   = LoadCellCertRow
@@ -185,13 +183,32 @@ LoadCellCertFormSet = inlineformset_factory(
 )
 
 
-# ── USER / ACCOUNT MANAGEMENT (ADMIN ONLY) ───────────────────────────────────
+# ── PHOTO REFERENCE ──────────────────────────────────────────────────────────
+
+class PhotoReferenceForm(forms.ModelForm):
+    class Meta:
+        model  = PhotoReference
+        fields = [
+            'photo', 'caption', 'source_type',
+            'record_date', 'equipment_name', 'serial_number', 'part_number',
+        ]
+        widgets = {
+            'photo':          forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*', 'capture': 'environment'}),
+            'caption':        forms.TextInput(attrs={**W, 'placeholder': 'Optional caption…'}),
+            'source_type':    forms.Select(attrs=W),
+            'record_date':    forms.DateInput(attrs=WD),
+            'equipment_name': forms.TextInput(attrs={**W, 'placeholder': 'e.g. Hydraulic Jack'}),
+            'serial_number':  forms.TextInput(attrs={**W, 'placeholder': 'e.g. SN-12345'}),
+            'part_number':    forms.TextInput(attrs={**W, 'placeholder': 'e.g. PN-98765'}),
+        }
+
+
+# ── USER / ACCOUNT MANAGEMENT ─────────────────────────────────────────────────
 
 class CreateUserForm(forms.ModelForm):
     password = forms.CharField(
         required=False,
         widget=forms.PasswordInput(attrs={**W, 'placeholder': 'Leave blank to keep current password'}),
-        help_text='Required when creating. Leave blank when editing to keep existing password.',
     )
     confirm_password = forms.CharField(
         required=False,
@@ -208,10 +225,7 @@ class CreateUserForm(forms.ModelForm):
             'last_name':  forms.TextInput(attrs=W),
             'email':      forms.EmailInput(attrs=W),
         }
-        help_texts = {
-            'username': '',
-            'is_staff': 'Staff/Admin users can manage accounts.',
-        }
+        help_texts = {'username': '', 'is_staff': 'Staff/Admin users can manage accounts.'}
 
     def clean(self):
         cleaned = super().clean()

@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+{% block title %}Photo Gallery — Excelsior Aviation GSE{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pg-toolbar {
+    background: #fff; border-bottom: 1px solid #e8e9ec;
+    padding: 0.7rem 1.25rem;
+    display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  }
+  .search-wrap { flex: 1; min-width: 180px; position: relative; }
+  .search-wrap i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #bbb; }
+  .search-wrap input {
+    padding-left: 2.2rem; border-radius: 10px;
+    border: 1.5px solid #e8e9ec; font-family: 'Barlow', sans-serif;
+    font-size: 0.9rem; height: 38px; width: 100%;
+  }
+  .search-wrap input:focus { border-color: #f5a623; outline: none; box-shadow: 0 0 0 3px rgba(245,166,35,.15); }
+  .filter-select {
+    height: 38px; border-radius: 8px; border: 1.5px solid #e8e9ec;
+    font-family: 'Barlow', sans-serif; font-size: 0.88rem; padding: 0 0.75rem;
+    background: #fff; color: #1c1c2e; cursor: pointer; min-width: 130px;
+  }
+  .filter-select:focus { border-color: #f5a623; outline: none; }
+
+  /* View toggle */
+  .view-toggle { display: flex; gap: 0.3rem; }
+  .view-btn {
+    width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid #e8e9ec;
+    background: #fff; color: #aaa; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem; transition: all .15s;
+  }
+  .view-btn.active, .view-btn:hover { background: #f5a623; color: #1c1c2e; border-color: #f5a623; }
+
+  .count-bar {
+    padding: .45rem 1.25rem; background: #fff;
+    border-bottom: 1px solid #e8e9ec; font-size: .78rem; color: #7a7f8c;
+  }
+  .count-badge { background: #1a6fbb; color: #fff; border-radius: 10px; padding: .15rem .5rem; font-size: .72rem; font-weight: 800; }
+
+  /* ── ALBUM VIEW ─────────────────────────────────────────── */
+  .album-wrap { padding: 1.25rem; }
+  .album-section { margin-bottom: 2rem; }
+  .album-section-header {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 0.75rem; padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e8e9ec;
+  }
+  .album-section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #1c1c2e;
+  }
+  .album-section-count {
+    background: #f0f0f0; color: #7a7f8c;
+    border-radius: 10px; padding: .1rem .5rem;
+    font-size: .72rem; font-weight: 800;
+  }
+  .album-badge {
+    display: inline-block; border-radius: 5px; padding: 0.15rem 0.5rem;
+    font-size: 0.68rem; font-weight: 800; font-family: 'Barlow Condensed', sans-serif;
+    text-transform: uppercase; letter-spacing: .3px;
+  }
+  .badge-loadtest   { background: #e8f5e9; color: #1a6e2e; border: 1px solid #b7ecbf; }
+  .badge-repair     { background: #fff3e0; color: #c25a00; border: 1px solid #ffcc80; }
+  .badge-inspection { background: #e3f2fd; color: #1a5faa; border: 1px solid #90caf9; }
+  .badge-inventory  { background: #f3e5f5; color: #7b1fa2; border: 1px solid #ce93d8; }
+  .badge-general    { background: #f5f5f5; color: #555;    border: 1px solid #ccc; }
+
+  .album-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.7rem;
+  }
+
+  /* ── GRID VIEW ──────────────────────────────────────────── */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.85rem; padding: 1.25rem;
+  }
+
+  /* ── PHOTO CARD (shared) ────────────────────────────────── */
+  .photo-card {
+    border-radius: 12px; overflow: hidden;
+    border: 1.5px solid #e8e9ec; background: #fff;
+    transition: transform .18s, box-shadow .18s, border-color .18s;
+    cursor: pointer;
+  }
+  .photo-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-color: #1a6fbb; }
+  .photo-card-img { aspect-ratio: 1/1; overflow: hidden; background: #f0f0f0; display: flex; align-items: center; justify-content: center; }
+  .photo-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-card-body { padding: 0.45rem 0.6rem 0.6rem; }
+  .photo-card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 0.8rem; font-weight: 800; color: #1c1c2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.1rem; }
+  .photo-card-meta { font-size: 0.68rem; color: #7a7f8c; }
+  .photo-card-badge { display: inline-block; border-radius: 5px; padding: 0.1rem 0.4rem; font-size: 0.63rem; font-weight: 800; font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .3px; margin-top: 0.2rem; }
+
+  .empty-state { text-align: center; padding: 4rem 1rem; color: #bbb; }
+  .empty-state i { font-size: 3rem; display: block; margin-bottom: 0.75rem; color: #e0e0e0; }
+
+  .pagination { display: flex; gap: 0.4rem; justify-content: center; padding: 1rem; flex-wrap: wrap; }
+  .page-link { min-width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; border: 1.5px solid #e8e9ec; background: #fff; color: #1c1c2e; font-weight: 700; font-size: 0.84rem; text-decoration: none; transition: all .18s; }
+  .page-link:hover { border-color: #1a6fbb; color: #1a6fbb; }
+  .page-link.active { background: #1a6fbb; color: #fff; border-color: #1a6fbb; }
+  .page-link.disabled { opacity: 0.4; pointer-events: none; }
+
+  /* ── LIGHTBOX ───────────────────────────────────────────── */
+  .lbox-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.82); z-index: 2000; align-items: center; justify-content: center; padding: 1rem; }
+  .lbox-overlay.show { display: flex; }
+  .lbox-box { background: #fff; border-radius: 16px; overflow: hidden; max-width: 820px; width: 100%; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 24px 64px rgba(0,0,0,.4); }
+  .lbox-img-wrap { background: #111; display: flex; align-items: center; justify-content: center; max-height: 50vh; overflow: hidden; }
+  .lbox-img-wrap img { max-width: 100%; max-height: 50vh; object-fit: contain; display: block; }
+  .lbox-info { padding: 1.25rem 1.5rem; overflow-y: auto; }
+  .lbox-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 800; color: #1c1c2e; margin-bottom: 0.85rem; }
+  .lbox-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 1.5rem; }
+  .lbox-meta-item { font-size: 0.82rem; }
+  .lbox-meta-item .lbl { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #aaa; display: block; margin-bottom: 0.15rem; }
+  .lbox-meta-item .val { color: #1c1c2e; font-weight: 600; }
+  .lbox-actions { display: flex; gap: 0.6rem; padding: 0.85rem 1.5rem; border-top: 1px solid #e8e9ec; background: #fafafa; flex-wrap: wrap; align-items: center; }
+  .lbox-close { margin-left: auto; background: #f8f9fa; color: #555; border: 1.5px solid #e8e9ec; border-radius: 8px; padding: 0.4rem 0.9rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; }
+  .lbox-del { background: #fff; color: #c0392b; border: 1.5px solid #f5c0c0; border-radius: 8px; padding: 0.4rem 0.9rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; transition: all .18s; }
+  .lbox-del:hover { background: #e74c3c; color: #fff; border-color: #e74c3c; }
+  .lbox-dl { background: #e8f5e9; color: #1a6e2e; border: 1.5px solid #b7ecbf; border-radius: 8px; padding: 0.4rem 0.9rem; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none; transition: all .18s; }
+  .lbox-dl:hover { background: #28a745; color: #fff; border-color: #28a745; }
+
+  @media (max-width: 600px) {
+    .album-grid, .photo-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding: 0.75rem; }
+    .lbox-meta { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="back-bar">
+  <a href="{% url 'dashboard' %}" class="back-btn"><i class="bi bi-arrow-left"></i> Dashboard</a>
+</div>
+<div class="page-header">
+  <h1><i class="bi bi-images"></i> Photo Gallery</h1>
+  <p>All uploaded equipment photos — click any photo for details</p>
+</div>
+
+<div class="pg-toolbar">
+  <form method="get" style="display:contents;">
+    <div class="search-wrap">
+      <i class="bi bi-search"></i>
+      <input type="text" name="search" value="{{ search_query }}" placeholder="Search by equipment, serial, part no…" id="searchInput"/>
+    </div>
+    <select name="source" class="filter-select" onchange="this.form.submit()">
+      <option value="">All Types</option>
+      {% for val, label in source_choices %}
+        <option value="{{ val }}" {% if source_type == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" style="background:#f5a623;color:#1c1c2e;border:none;border-radius:8px;padding:.45rem .9rem;cursor:pointer;font-weight:700;min-height:38px;font-size:.83rem;display:flex;align-items:center;gap:.3rem;">
+      <i class="bi bi-search"></i> Search
+    </button>
+  </form>
+  <!-- View Toggle -->
+  <div class="view-toggle">
+    <button class="view-btn active" id="btnAlbum" onclick="setView('album')" title="Album View">
+      <i class="bi bi-collection"></i>
+    </button>
+    <button class="view-btn" id="btnGrid" onclick="setView('grid')" title="Grid View">
+      <i class="bi bi-grid-3x3-gap"></i>
+    </button>
+  </div>
+</div>
+
+<div class="count-bar">
+  <span class="count-badge">{{ total_count }}</span> total photo(s)
+  {% if search_query %} — filtered by "<strong>{{ search_query }}</strong>"{% endif %}
+  {% if source_type %} — type: <strong>{{ source_type }}</strong>{% endif %}
+</div>
+
+<!-- ── ALBUM VIEW ─────────────────────────────────────────── -->
+<div id="albumView" class="album-wrap">
+  {% if photos %}
+    {% regroup photos by source_type as photo_albums %}
+    {% for album in photo_albums %}
+    <div class="album-section">
+      <div class="album-section-header">
+        {% if album.grouper == 'loadtest' %}
+          <span class="album-badge badge-loadtest"><i class="bi bi-activity"></i> Load Test</span>
+        {% elif album.grouper == 'repair' %}
+          <span class="album-badge badge-repair"><i class="bi bi-tools"></i> Repair</span>
+        {% elif album.grouper == 'inspection' %}
+          <span class="album-badge badge-inspection"><i class="bi bi-clipboard-check"></i> Inspection</span>
+        {% elif album.grouper == 'inventory' %}
+          <span class="album-badge badge-inventory"><i class="bi bi-box-seam"></i> Inventory</span>
+        {% else %}
+          <span class="album-badge badge-general"><i class="bi bi-image"></i> General</span>
+        {% endif %}
+        <span class="album-section-count">{{ album.list|length }} photo(s)</span>
+      </div>
+      <div class="album-grid">
+        {% for photo in album.list %}
+        <div class="photo-card" onclick="openLightbox({{ photo.pk }})">
+          <div class="photo-card-img">
+            <img src="{{ photo.photo.url }}" alt="{{ photo.equipment_name|default:'Photo' }}" loading="lazy"/>
+          </div>
+          <div class="photo-card-body">
+            <div class="photo-card-name">{{ photo.equipment_name|default:"(No name)" }}</div>
+            <div class="photo-card-meta">{{ photo.uploaded_at|date:"M d, Y" }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <i class="bi bi-image"></i>
+      <p>No photos found.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- ── GRID VIEW ──────────────────────────────────────────── -->
+<div id="gridView" class="photo-grid" style="display:none;">
+  {% if photos %}
+    {% for photo in photos %}
+    <div class="photo-card" onclick="openLightbox({{ photo.pk }})">
+      <div class="photo-card-img">
+        <img src="{{ photo.photo.url }}" alt="{{ photo.equipment_name|default:'Photo' }}" loading="lazy"/>
+      </div>
+      <div class="photo-card-body">
+        <div class="photo-card-name">{{ photo.equipment_name|default:"(No name)" }}</div>
+        <div class="photo-card-meta">
+          {% if photo.serial_number %}SN: {{ photo.serial_number }}<br>{% endif %}
+          {{ photo.uploaded_at|date:"M d, Y" }}
+        </div>
+        <span class="photo-card-badge badge-{{ photo.source_type }}">{{ photo.get_source_type_display }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" style="grid-column:1/-1;">
+      <i class="bi bi-image"></i>
+      <p>No photos found.</p>
+    </div>
+  {% endif %}
+</div>
+
+{% if photos.has_other_pages %}
+<div class="pagination">
+  {% if photos.has_previous %}
+    <a href="?page={{ photos.previous_page_number }}&search={{ search_query }}&source={{ source_type }}" class="page-link"><i class="bi bi-chevron-left"></i></a>
+  {% else %}
+    <span class="page-link disabled"><i class="bi bi-chevron-left"></i></span>
+  {% endif %}
+  {% for num in photos.paginator.page_range %}
+    {% if num == photos.number %}
+      <span class="page-link active">{{ num }}</span>
+    {% elif num >= photos.number|add:"-3" and num <= photos.number|add:"3" %}
+      <a href="?page={{ num }}&search={{ search_query }}&source={{ source_type }}" class="page-link">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+  {% if photos.has_next %}
+    <a href="?page={{ photos.next_page_number }}&search={{ search_query }}&source={{ source_type }}" class="page-link"><i class="bi bi-chevron-right"></i></a>
+  {% else %}
+    <span class="page-link disabled"><i class="bi bi-chevron-right"></i></span>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Lightbox -->
+<div class="lbox-overlay" id="lightboxOverlay">
+  <div class="lbox-box">
+    <div class="lbox-img-wrap">
+      <img src="" alt="" id="lboxImg"/>
+    </div>
+    <div class="lbox-info">
+      <div class="lbox-title" id="lboxTitle">—</div>
+      <div class="lbox-meta">
+        <div class="lbox-meta-item"><span class="lbl">Date</span><span class="val" id="lboxDate">—</span></div>
+        <div class="lbox-meta-item"><span class="lbl">Serial Number</span><span class="val" id="lboxSerial">—</span></div>
+        <div class="lbox-meta-item"><span class="lbl">Type</span><span class="val" id="lboxType">—</span></div>
+        <div class="lbox-meta-item"><span class="lbl">Uploaded By</span><span class="val" id="lboxUploader">—</span></div>
+        <div class="lbox-meta-item"><span class="lbl">Uploaded At</span><span class="val" id="lboxUploadedAt">—</span></div>
+        <div class="lbox-meta-item"><span class="lbl">Part Number</span><span class="val" id="lboxPart">—</span></div>
+      </div>
+      <div id="lboxCaption" style="margin-top:0.65rem;font-size:0.82rem;color:#7a7f8c;font-style:italic;"></div>
+    </div>
+    <div class="lbox-actions">
+      <button class="lbox-del" onclick="deletePhoto()"><i class="bi bi-trash"></i> Delete</button>
+      <a class="lbox-dl" id="lboxDownloadBtn" href="#" download><i class="bi bi-download"></i> Download</a>
+      <button class="lbox-close" onclick="closeLightbox()"><i class="bi bi-x-lg"></i> Close</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── VIEW TOGGLE ───────────────────────────────────────────────────────────────
+function setView(v) {
+  const isAlbum = v === 'album';
+  document.getElementById('albumView').style.display = isAlbum ? 'block' : 'none';
+  document.getElementById('gridView').style.display  = isAlbum ? 'none'  : 'grid';
+  document.getElementById('btnAlbum').classList.toggle('active', isAlbum);
+  document.getElementById('btnGrid').classList.toggle('active', !isAlbum);
+  localStorage.setItem('pgView', v);
+}
+
+// Restore last view preference
+(function() {
+  const saved = localStorage.getItem('pgView') || 'album';
+  setView(saved);
+})();
+
+
+// ── LIGHTBOX ──────────────────────────────────────────────────────────────────
+let currentPhotoId = null;
+
+document.getElementById('searchInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); this.closest('form').submit(); }
+});
+
+function openLightbox(pk) {
+  currentPhotoId = pk;
+  fetch(`/photos/${pk}/detail/`)
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('lboxImg').src               = d.url;
+      document.getElementById('lboxImg').alt               = d.equipment_name || 'Photo';
+      document.getElementById('lboxTitle').textContent      = d.equipment_name || '(No equipment name)';
+      document.getElementById('lboxDate').textContent       = d.record_date    || '—';
+      document.getElementById('lboxSerial').textContent     = d.serial_number  || '—';
+      document.getElementById('lboxPart').textContent       = d.part_number    || '—';
+      document.getElementById('lboxType').textContent       = d.source_type    || '—';
+      document.getElementById('lboxUploader').textContent   = d.uploaded_by    || '—';
+      document.getElementById('lboxUploadedAt').textContent = d.uploaded_at    || '—';
+      document.getElementById('lboxCaption').textContent    = d.caption        || '';
+
+      const dlBtn = document.getElementById('lboxDownloadBtn');
+      dlBtn.href     = d.url;
+      dlBtn.download = (d.equipment_name || 'photo').replace(/\s+/g, '_');
+
+      document.getElementById('lightboxOverlay').classList.add('show');
+    });
+}
+
+function closeLightbox() {
+  document.getElementById('lightboxOverlay').classList.remove('show');
+  currentPhotoId = null;
+}
+
+function deletePhoto() {
+  if (!currentPhotoId) return;
+  if (!confirm('Delete this photo? This cannot be undone.')) return;
+  fetch(`/photos/${currentPhotoId}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCookie('csrftoken'), 'X-Requested-With': 'XMLHttpRequest' }
+  }).then(r => r.json()).then(d => {
+    if (d.success) { closeLightbox(); location.reload(); }
+  });
+}
+
+document.getElementById('lightboxOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeLightbox();
+});
+
+function getCookie(name) {
+  for (const c of document.cookie.split(';')) {
+    const t = c.trim();
+    if (t.startsWith(name + '=')) return decodeURIComponent(t.slice(name.length + 1));
+  }
+  return null;
+}
+</script>
+{% endblock %}

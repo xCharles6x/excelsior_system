@@ -12,10 +12,12 @@ import io
 import os
 from django.conf import settings as django_settings
 
-from .models import LoadTest, Inventory, RepairInspection, Certificate, Customer, TestEquipmentRow, LoadCellCertRow, LoadCellSavedCert
+from .models import (LoadTest, Inventory, RepairInspection, Certificate,
+                     Customer, TestEquipmentRow, LoadCellCertRow,
+                     LoadCellSavedCert, PhotoReference)
 from .forms import (LoadTestForm, InventoryForm, RepairInspectionForm,
                     CertificateForm, TestEquipmentFormSet, LoadCellCertFormSet,
-                    CustomerForm, CreateUserForm)
+                    CustomerForm, CreateUserForm, PhotoReferenceForm)
 
 
 
@@ -57,19 +59,30 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    return render(request, 'dashboard.html')
+    recent_photos = PhotoReference.objects.select_related('uploaded_by').all()[:12]
+    return render(request, 'dashboard.html', {'recent_photos': recent_photos})
 
 
-# ── LOAD TEST ─────────────────────────────────────────────────────────────────
+# ── I-REPLACE ang loadtest, inventory, repair, inspection views ───────────────
+# Ang pagbabago: request.FILES.getlist('photos') para multiple files
 
 @login_required
 def loadtest(request):
     if request.method == 'POST':
-        form = LoadTestForm(request.POST)
+        form = LoadTestForm(request.POST, request.FILES)
         if form.is_valid():
             obj = form.save(commit=False)
-            obj.created_by = request.user
             obj.save()
+            # Save multiple photos
+            for photo_file in request.FILES.getlist('photos'):
+                PhotoReference.objects.create(
+                    photo=photo_file,
+                    source_type='loadtest',
+                    equipment_name=obj.description or '',
+                    serial_number=obj.serial_number or '',
+                    record_date=obj.date_inspection,
+                    uploaded_by=request.user,
+                )
             messages.success(request, 'Load Test record saved successfully!')
             return redirect('loadtest')
         messages.error(request, 'Please correct the errors below.')
@@ -78,16 +91,21 @@ def loadtest(request):
     return render(request, 'loadtest.html', {'form': form})
 
 
-# ── INVENTORY ─────────────────────────────────────────────────────────────────
-
 @login_required
 def inventory(request):
     if request.method == 'POST':
-        form = InventoryForm(request.POST)
+        form = InventoryForm(request.POST, request.FILES)
         if form.is_valid():
             obj = form.save(commit=False)
-            obj.created_by = request.user
             obj.save()
+            for photo_file in request.FILES.getlist('photos'):
+                PhotoReference.objects.create(
+                    photo=photo_file,
+                    source_type='inventory',
+                    equipment_name=obj.description or '',
+                    serial_number=obj.serial_number or '',
+                    uploaded_by=request.user,
+                )
             messages.success(request, 'Inventory record saved successfully!')
             return redirect('inventory')
         messages.error(request, 'Please correct the errors below.')
@@ -96,16 +114,22 @@ def inventory(request):
     return render(request, 'inventory.html', {'form': form})
 
 
-# ── REPAIR ────────────────────────────────────────────────────────────────────
-
 @login_required
 def repair(request):
     if request.method == 'POST':
-        form = RepairInspectionForm(request.POST)
+        form = RepairInspectionForm(request.POST, request.FILES)
         if form.is_valid():
             obj = form.save(commit=False)
-            obj.created_by = request.user
             obj.save()
+            for photo_file in request.FILES.getlist('photos'):
+                PhotoReference.objects.create(
+                    photo=photo_file,
+                    source_type='repair',
+                    equipment_name=obj.description or '',
+                    serial_number=obj.serial_number or '',
+                    record_date=obj.date,
+                    uploaded_by=request.user,
+                )
             messages.success(request, 'Repair record saved successfully!')
             return redirect('repair')
         messages.error(request, 'Please correct the errors below.')
@@ -114,24 +138,29 @@ def repair(request):
     return render(request, 'repair.html', {'form': form, 'page_title': 'Repair'})
 
 
-# ── INSPECTION ────────────────────────────────────────────────────────────────
-
 @login_required
 def inspection(request):
     if request.method == 'POST':
-        form = RepairInspectionForm(request.POST)
+        form = RepairInspectionForm(request.POST, request.FILES)
         if form.is_valid():
             obj = form.save(commit=False)
             obj.record_type = 'inspection'
-            obj.created_by = request.user
             obj.save()
+            for photo_file in request.FILES.getlist('photos'):
+                PhotoReference.objects.create(
+                    photo=photo_file,
+                    source_type='inspection',
+                    equipment_name=obj.description or '',
+                    serial_number=obj.serial_number or '',
+                    record_date=obj.date,
+                    uploaded_by=request.user,
+                )
             messages.success(request, 'Inspection record saved successfully!')
             return redirect('inspection')
         messages.error(request, 'Please correct the errors below.')
     else:
         form = RepairInspectionForm(initial={'record_type': 'inspection'})
     return render(request, 'repair.html', {'form': form, 'page_title': 'Inspection'})
-
 
 # ── MASTER LIST ───────────────────────────────────────────────────────────────
 
@@ -296,7 +325,7 @@ def export_excel(request):
 
     if record_type == 'loadtest':
         ws.title = 'Load Test Records'
-        headers = ['Customer', 'Customer Address', 'Company', 'Description',
+        headers = ['Customer', 'Customer Address', 'Company', 'Description', 'Capacity',
                    'Model No.', 'Serial No.', 'Equipment',
                    'Tested Load', 'Safe Load', 'Certificate No.',
                    'Remark', 'Mechanic', 'Date Inspection', 'Date Due']
@@ -310,14 +339,14 @@ def export_excel(request):
         ws.append(headers)
         for r in qs:
             ws.append([r.customer_name, r.customer_address, r.company, r.description,
-                       r.model_number, r.serial_number, r.equipment,
+                       r.capacity, r.model_number, r.serial_number, r.equipment,
                        r.tested_load, r.safe_load, r.certificate_number,
                        r.remark, r.mechanic,
                        str(r.date_inspection or ''), str(r.date_due or '')])
 
     elif record_type == 'inventory':
         ws.title = 'Inventory Records'
-        headers = ['Customer', 'Customer Address', 'Description',
+        headers = ['Customer', 'Customer Address', 'Description', 'Capacity',
                    'Model No.', 'Serial No.', 'Location', 'Quantity', 'Remarks']
         qs = Inventory.objects.all()
         if search_query:
@@ -329,12 +358,12 @@ def export_excel(request):
         ws.append(headers)
         for r in qs:
             ws.append([r.customer_name, r.customer_address, r.description,
-                       r.model_number, r.serial_number, r.location,
+                       r.capacity, r.model_number, r.serial_number, r.location,
                        r.quantity, r.remarks])
 
     elif record_type == 'repair':
         ws.title = 'Repair & Inspection Records'
-        headers = ['Customer', 'Customer Address', 'Type', 'Company', 'Description',
+        headers = ['Customer', 'Customer Address', 'Type', 'Company', 'Description', 'Capacity',
                    'Model No.', 'Serial No.', 'Report No.',
                    'Customer Report', 'Diagnose Result', 'Remarks', 'Date', 'Mechanic']
         qs = RepairInspection.objects.all()
@@ -348,7 +377,7 @@ def export_excel(request):
         for r in qs:
             ws.append([r.customer_name, r.customer_address,
                        r.get_record_type_display(), r.company, r.description,
-                       r.model_number, r.serial_number, r.report_number,
+                       r.capacity, r.model_number, r.serial_number, r.report_number,
                        r.customer_report, r.diagnose_result, r.remarks,
                        str(r.date or ''), r.mechanic])
 
@@ -523,6 +552,138 @@ def loadcell_cert_delete(request):
     return JsonResponse({'success': True})
 
 
+# ── PHOTO REFERENCE VIEWS ─────────────────────────────────────────────────────
+
+@login_required
+def photo_gallery(request):
+    """Full photo gallery page with search/filter."""
+    photos = PhotoReference.objects.select_related('uploaded_by').all()
+    q           = request.GET.get('search', '').strip()
+    source_type = request.GET.get('source', '').strip()
+
+    if q:
+        photos = photos.filter(
+            Q(equipment_name__icontains=q) |
+            Q(serial_number__icontains=q) |
+            Q(part_number__icontains=q) |
+            Q(caption__icontains=q)
+        )
+    if source_type:
+        photos = photos.filter(source_type=source_type)
+
+    paginator = Paginator(photos, 24)
+    page      = paginator.get_page(request.GET.get('page', 1))
+    return render(request, 'photos.html', {
+        'photos':       page,
+        'search_query': q,
+        'source_type':  source_type,
+        'source_choices': PhotoReference.SOURCE_CHOICES,
+        'total_count':  PhotoReference.objects.count(),
+    })
+
+
+@login_required
+def photo_upload(request):
+    """Upload a standalone photo (not attached to a specific record)."""
+    if request.method == 'POST':
+        form = PhotoReferenceForm(request.POST, request.FILES)
+        if form.is_valid():
+            photo = form.save(commit=False)
+            photo.uploaded_by = request.user
+            photo.save()
+            messages.success(request, 'Photo uploaded successfully!')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'id': photo.pk,
+                    'url': photo.photo.url,
+                    'equipment_name': photo.equipment_name,
+                    'serial_number':  photo.serial_number,
+                    'part_number':    photo.part_number,
+                    'record_date':    str(photo.record_date) if photo.record_date else '',
+                    'uploaded_by':    photo.uploaded_by.get_full_name() or photo.uploaded_by.username,
+                    'uploaded_at':    photo.uploaded_at.strftime('%b %d, %Y %I:%M %p'),
+                    'source_type':    photo.get_source_type_display(),
+                    'caption':        photo.caption,
+                })
+            return redirect('photo_gallery')
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+        messages.error(request, 'Please correct the errors below.')
+    else:
+        # Pre-fill from a record if linked
+        initial = {}
+        lt_pk = request.GET.get('loadtest')
+        rp_pk = request.GET.get('repair')
+        iv_pk = request.GET.get('inventory')
+        if lt_pk:
+            try:
+                rec = LoadTest.objects.get(pk=lt_pk)
+                initial = {
+                    'source_type':    'loadtest',
+                    'equipment_name': rec.description,
+                    'serial_number':  rec.serial_number,
+                    'record_date':    rec.date_inspection,
+                }
+            except LoadTest.DoesNotExist:
+                pass
+        elif rp_pk:
+            try:
+                rec = RepairInspection.objects.get(pk=rp_pk)
+                initial = {
+                    'source_type':    rec.record_type,
+                    'equipment_name': rec.description,
+                    'serial_number':  rec.serial_number,
+                    'record_date':    rec.date,
+                }
+            except RepairInspection.DoesNotExist:
+                pass
+        elif iv_pk:
+            try:
+                rec = Inventory.objects.get(pk=iv_pk)
+                initial = {
+                    'source_type':    'inventory',
+                    'equipment_name': rec.description,
+                    'serial_number':  rec.serial_number,
+                }
+            except Inventory.DoesNotExist:
+                pass
+        form = PhotoReferenceForm(initial=initial)
+    return render(request, 'photo_upload.html', {'form': form})
+
+
+@login_required
+def photo_detail(request, pk):
+    """Return photo detail as JSON for the lightbox modal."""
+    photo = get_object_or_404(PhotoReference, pk=pk)
+    return JsonResponse({
+        'id':           photo.pk,
+        'url':          photo.photo.url,
+        'caption':      photo.caption,
+        'equipment_name': photo.equipment_name,
+        'serial_number':  photo.serial_number,
+        'part_number':    photo.part_number,
+        'record_date':    str(photo.record_date) if photo.record_date else '—',
+        'source_type':    photo.get_source_type_display(),
+        'uploaded_by':    photo.uploaded_by.get_full_name() or photo.uploaded_by.username if photo.uploaded_by else '—',
+        'uploaded_at':    photo.uploaded_at.strftime('%b %d, %Y %I:%M %p'),
+    })
+
+
+@login_required
+@require_POST
+def photo_delete(request, pk):
+    photo = get_object_or_404(PhotoReference, pk=pk)
+    # Delete the actual file from storage
+    if photo.photo and os.path.isfile(photo.photo.path):
+        os.remove(photo.photo.path)
+    photo.delete()
+    messages.success(request, 'Photo deleted.')
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'success': True})
+    return redirect('photo_gallery')
+
+
 # ── ADMIN: USER MANAGEMENT ────────────────────────────────────────────────────
 
 @admin_required
@@ -627,7 +788,7 @@ def cert_from_loadtest(request, pk):
         'customer':            customer.pk if customer else None,
         'address':             record.customer_address or '',
         'product_description': record.description or '',
-        'capacity':            record.safe_load or '',
+        'capacity':            record.capacity or record.safe_load or '',
         'model_number':        record.model_number or '',
         'serial_number':       record.serial_number or '',
         'tested_load':         record.tested_load or '',
@@ -660,6 +821,7 @@ def cert_from_repair(request, pk):
         'customer':            customer.pk if customer else None,
         'address':             record.customer_address or '',
         'product_description': record.description or '',
+        'capacity':            record.capacity or '',
         'model_number':        record.model_number or '',
         'serial_number':       record.serial_number or '',
         'date_of_inspection':  record.date or '',
@@ -689,9 +851,9 @@ def cert_from_inventory(request, pk):
         'customer':            customer.pk if customer else None,
         'address':             record.customer_address or '',
         'product_description': record.description or '',
+        'capacity':            record.capacity or str(record.quantity) if record.quantity else '',
         'model_number':        record.model_number or '',
         'serial_number':       record.serial_number or '',
-        'capacity':            str(record.quantity) if record.quantity else '',
     }
     form       = CertificateForm(initial=initial)
     formset    = TestEquipmentFormSet()
@@ -738,10 +900,6 @@ def download_inventory_excel(request, pk):
 
 @login_required
 def autocomplete_api(request):
-    """
-    Returns distinct field value suggestions from past records.
-    Query params: field, q (search term), model (loadtest/repair/inventory/all)
-    """
     field = request.GET.get('field', '').strip()
     q     = request.GET.get('q', '').strip()
     model = request.GET.get('model', 'all')
@@ -749,20 +907,19 @@ def autocomplete_api(request):
     ALLOWED_FIELDS = {
         'loadtest': [
             'customer_name', 'customer_address', 'company', 'description',
-            'model_number', 'serial_number', 'equipment',
+            'capacity', 'model_number', 'serial_number', 'equipment',
             'tested_load', 'safe_load', 'certificate_number', 'mechanic',
         ],
         'repair': [
             'customer_name', 'customer_address', 'company', 'description',
-            'model_number', 'serial_number', 'report_number', 'mechanic',
+            'capacity', 'model_number', 'serial_number', 'report_number', 'mechanic',
         ],
         'inventory': [
             'customer_name', 'customer_address', 'description',
-            'model_number', 'serial_number', 'location',
+            'capacity', 'model_number', 'serial_number', 'location',
         ],
     }
 
-    # Validate field is in the allowed list
     allowed = set()
     for v in ALLOWED_FIELDS.values():
         allowed.update(v)
@@ -792,7 +949,6 @@ def autocomplete_api(request):
     except Exception:
         return JsonResponse({'results': []})
 
-    # Sort: exact prefix matches first, then alphabetical
     final = sorted(
         [r for r in results if r and (q.lower() in r.lower() if q else True)],
         key=lambda x: (not x.lower().startswith(q.lower()), x.lower())

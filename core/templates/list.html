@@ -221,9 +221,9 @@
 {% if record_type == 'loadtest' %}
 <div class="warranty-legend">
   <span>Due Date Status:</span>
-  <span class="warranty-badge warranty-critical">🔴 Due Today / Due</span>
-  <span class="warranty-badge warranty-urgent">🟠 Within 7 days Due</span>
-  <span class="warranty-badge warranty-warning">🟡 Within 30 days Due</span>
+  <span class="warranty-badge warranty-critical">🔴 Due Today / Overdue</span>
+  <span class="warranty-badge warranty-urgent">🟠 Within 7 days</span>
+  <span class="warranty-badge warranty-warning">🟡 Within 30 days</span>
 </div>
 {% endif %}
 
@@ -234,7 +234,7 @@
     {% if loadtest_records %}
     <table class="records-table">
       <thead><tr>
-        <th>#</th><th>Customer</th><th>Company</th><th>Description</th>
+        <th>#</th><th>Customer</th><th>Description</th>
         <th>Model No.</th><th>Serial No.</th><th>Tested Load</th><th>Safe Load</th>
         <th>Certificate No.</th><th>Mechanic</th><th>Date Inspection</th>
         <th>Date Due</th>
@@ -246,7 +246,7 @@
         <tr{% if ws %} class="row-{{ ws.level }}"{% endif %}>
           <td>{{ forloop.counter }}</td>
           <td><strong>{{ r.customer_name }}</strong><br><small style="color:#7a7f8c;">{{ r.customer_address }}</small></td>
-          <td>{{ r.company }}</td><td>{{ r.description }}</td>
+          <td>{{ r.description }}</td>
           <td><code>{{ r.model_number }}</code></td><td><code>{{ r.serial_number }}</code></td>
           <td><strong style="color:#d4891a;">{{ r.tested_load }}</strong></td>
           <td>{{ r.safe_load }}</td>
@@ -290,7 +290,7 @@
     {% if repair_records %}
     <table class="records-table">
       <thead><tr>
-        <th>#</th><th>Customer</th><th>Type</th><th>Company</th><th>Description</th>
+        <th>#</th><th>Customer</th><th>Type</th><th>Description</th>
         <th>Model No.</th><th>Serial No.</th><th>Report No.</th>
         <th>Mechanic</th><th>Date</th><th>Inputted By</th><th>Actions</th>
       </tr></thead>
@@ -300,7 +300,7 @@
           <td>{{ forloop.counter }}</td>
           <td><strong>{{ r.customer_name }}</strong><br><small style="color:#7a7f8c;">{{ r.customer_address }}</small></td>
           <td><span class="{% if r.record_type == 'repair' %}badge-repair{% else %}badge-inspection{% endif %}">{{ r.get_record_type_display }}</span></td>
-          <td>{{ r.company }}</td><td>{{ r.description }}</td>
+          <td>{{ r.description }}</td>
           <td><code>{{ r.model_number }}</code></td><td><code>{{ r.serial_number }}</code></td>
           <td>{{ r.report_number }}</td><td>{{ r.mechanic }}</td><td>{{ r.date }}</td>
           <td>
@@ -470,4 +470,3 @@ document.getElementById('deleteModal').addEventListener('click', function(e) {
 });
 </script>
 {% endblock %}
-

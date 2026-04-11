@@ -47,7 +47,7 @@ urlpatterns = [
     path('api/loadcell-cert/save/',    views.loadcell_cert_save,   name='loadcell_cert_save'),
     path('api/loadcell-cert/delete/',  views.loadcell_cert_delete, name='loadcell_cert_delete'),
 
-    # ✅ Autocomplete API
+    # Autocomplete API
     path('api/autocomplete/',          views.autocomplete_api,     name='autocomplete_api'),
 
     # Go to Certification (pre-fill from records)
@@ -60,4 +60,10 @@ urlpatterns = [
     path('admin-panel/users/create/',          views.admin_user_create, name='admin_user_create'),
     path('admin-panel/users/<int:pk>/edit/',   views.admin_user_edit,   name='admin_user_edit'),
     path('admin-panel/users/<int:pk>/delete/', views.admin_user_delete, name='admin_user_delete'),
+
+    # Photo Reference
+    path('photos/',                  views.photo_gallery, name='photo_gallery'),
+    path('photos/upload/',           views.photo_upload,  name='photo_upload'),
+    path('photos/<int:pk>/detail/',  views.photo_detail,  name='photo_detail'),
+    path('photos/<int:pk>/delete/',  views.photo_delete,  name='photo_delete'),
 ]

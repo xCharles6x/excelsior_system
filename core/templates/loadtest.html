@@ -1,6 +1,55 @@
 {% extends 'base.html' %}
 {% block title %}Load Test — Excelsior Aviation GSE{% endblock %}
 
+{% block extra_css %}
+<style>
+  /* ── MULTI PHOTO UPLOAD ─────────────────────────────────── */
+  .multi-upload-zone {
+    border: 2px dashed #b3d9ff; border-radius: 12px;
+    padding: 1.5rem; text-align: center; background: #f5faff;
+    cursor: pointer; transition: border-color .2s, background .2s; position: relative;
+  }
+  .multi-upload-zone:hover, .multi-upload-zone.dragover { border-color: #1a6fbb; background: #e8f4ff; }
+  .multi-upload-zone i { font-size: 2rem; color: #1a6fbb; display: block; margin-bottom: 0.4rem; }
+  .multi-upload-zone p { font-size: 0.85rem; color: #555; margin: 0; }
+  .multi-file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+  .photo-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 0.6rem; margin-top: 0.85rem;
+  }
+  .photo-preview-item {
+    position: relative; aspect-ratio: 1/1;
+    border-radius: 8px; overflow: hidden;
+    border: 1.5px solid #b3d9ff; background: #f0f0f0;
+  }
+  .photo-preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-preview-remove {
+    position: absolute; top: 3px; right: 3px;
+    background: rgba(0,0,0,.55); color: #fff; border: none;
+    border-radius: 50%; width: 20px; height: 20px; font-size: 0.65rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .photo-preview-remove:hover { background: #e74c3c; }
+  .photo-count-bar {
+    font-size: 0.78rem; color: #1a6fbb; font-weight: 700;
+    margin-top: 0.5rem; display: none;
+  }
+
+  .btn-camera {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: #1c1c2e; color: #fff; border: none; border-radius: 8px;
+    font-family: inherit; font-weight: 700; font-size: 0.85rem;
+    padding: 0.5rem 1rem; cursor: pointer; margin-bottom: 0.5rem; transition: background .18s;
+  }
+  .btn-camera:hover { background: #333; }
+  .or-divider { display: flex; align-items: center; gap: 0.75rem; margin: 0.5rem 0; color: #bbb; font-size: 0.8rem; }
+  .or-divider::before, .or-divider::after { content:''; flex:1; height:1px; background:#e8e9ec; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="back-bar">
   <a href="{% url 'dashboard' %}" class="back-btn"><i class="bi bi-arrow-left"></i> Dashboard</a>
@@ -10,7 +59,7 @@
   <p>Enter load test inspection details below</p>
 </div>
 <div class="content-wrap">
-  <form method="post" novalidate>
+  <form method="post" enctype="multipart/form-data" novalidate id="ltForm">
     {% csrf_token %}
 
     <!-- Customer Information -->
@@ -20,30 +69,28 @@
         <div class="form-grid">
           <div class="form-group">
             <label>Customer Name</label>
-            {{ form.customer_name }}
-            {{ form.customer_name.errors }}
+            {{ form.customer_name }}{{ form.customer_name.errors }}
           </div>
           <div class="form-group">
             <label>Customer Address</label>
-            {{ form.customer_address }}
-            {{ form.customer_address.errors }}
+            {{ form.customer_address }}{{ form.customer_address.errors }}
           </div>
         </div>
       </div>
     </div>
 
     <!-- Load Test Details -->
-    <div class="card">
+    <div class="card" style="margin-bottom:1rem;">
       <div class="card-header"><i class="bi bi-activity"></i> Load Test Details</div>
       <div class="card-body">
         <div class="form-grid">
           <div class="form-group">
-            <label>Company</label>
-            {{ form.company }}{{ form.company.errors }}
-          </div>
-          <div class="form-group">
             <label>Description</label>
             {{ form.description }}{{ form.description.errors }}
+          </div>
+          <div class="form-group">
+            <label>Capacity</label>
+            {{ form.capacity }}{{ form.capacity.errors }}
           </div>
           <div class="form-group">
             <label>Model Number</label>
@@ -86,12 +133,101 @@
             {{ form.remark }}{{ form.remark.errors }}
           </div>
         </div>
-        <div style="margin-top:1.25rem;display:flex;gap:0.75rem;">
-          <button type="submit" class="btn-orange"><i class="bi bi-save2-fill"></i> Submit Record</button>
-          <button type="reset" class="btn-white"><i class="bi bi-arrow-counterclockwise"></i> Clear</button>
-        </div>
       </div>
+    </div>
+
+    <!-- Photo Reference (Multiple) -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-header"><i class="bi bi-camera"></i> Photo Reference <span style="font-weight:400;color:#aaa;font-size:0.8rem;">(optional — multiple allowed)</span></div>
+      <div class="card-body">
+        <button type="button" class="btn-camera" onclick="document.getElementById('ltCameraInput').click()">
+          <i class="bi bi-camera-fill"></i> Take a Photo
+        </button>
+        <input type="file" id="ltCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="ltAddFiles(this.files)"/>
+        <div class="or-divider">or</div>
+        <div class="multi-upload-zone" id="ltDropZone">
+          <input type="file" class="multi-file-input" id="ltFileInput" name="photos" accept="image/*" multiple onchange="ltAddFiles(this.files)"/>
+          <i class="bi bi-cloud-upload"></i>
+          <p><strong>Click to browse</strong> or drag & drop</p>
+          <p style="font-size:0.72rem;color:#aaa;margin-top:0.2rem;">JPG, PNG, WEBP — multiple files allowed</p>
+        </div>
+        <div class="photo-count-bar" id="ltCountBar"></div>
+        <div class="photo-preview-grid" id="ltPreviewGrid"></div>
+        <!-- Hidden inputs for selected files will be injected here -->
+        <div id="ltHiddenInputs"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:1.25rem;display:flex;gap:0.75rem;">
+      <button type="submit" class="btn-orange"><i class="bi bi-save2-fill"></i> Submit Record</button>
+      <button type="reset" class="btn-white" onclick="ltClearAll()"><i class="bi bi-arrow-counterclockwise"></i> Clear</button>
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let ltFiles = [];
+
+function ltAddFiles(fileList) {
+  Array.from(fileList).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    // avoid dupes by name+size
+    if (ltFiles.find(f => f.name === file.name && f.size === file.size)) return;
+    ltFiles.push(file);
+  });
+  ltRenderPreviews();
+  ltSyncInputs();
+}
+
+function ltRenderPreviews() {
+  const grid = document.getElementById('ltPreviewGrid');
+  const bar  = document.getElementById('ltCountBar');
+  grid.innerHTML = '';
+  ltFiles.forEach((file, idx) => {
+    const div = document.createElement('div');
+    div.className = 'photo-preview-item';
+    const img = document.createElement('img');
+    const reader = new FileReader();
+    reader.onload = e => img.src = e.target.result;
+    reader.readAsDataURL(file);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'photo-preview-remove';
+    btn.innerHTML = '<i class="bi bi-x"></i>';
+    btn.onclick = () => { ltFiles.splice(idx, 1); ltRenderPreviews(); ltSyncInputs(); };
+    div.appendChild(img);
+    div.appendChild(btn);
+    grid.appendChild(div);
+  });
+  if (ltFiles.length > 0) {
+    bar.textContent = `${ltFiles.length} photo(s) selected`;
+    bar.style.display = 'block';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function ltSyncInputs() {
+  // Build a single FileList from ltFiles and assign to the file input
+  const dt = new DataTransfer();
+  ltFiles.forEach(f => dt.items.add(f));
+  document.getElementById('ltFileInput').files = dt.files;
+}
+
+function ltClearAll() {
+  ltFiles = [];
+  ltRenderPreviews();
+  document.getElementById('ltFileInput').value = '';
+}
+
+// Drag & drop
+const ltDz = document.getElementById('ltDropZone');
+['dragenter','dragover'].forEach(ev => ltDz.addEventListener(ev, e => { e.preventDefault(); ltDz.classList.add('dragover'); }));
+['dragleave','drop'].forEach(ev => ltDz.addEventListener(ev, e => { e.preventDefault(); ltDz.classList.remove('dragover'); }));
+ltDz.addEventListener('drop', e => {
+  if (e.dataTransfer.files.length) ltAddFiles(e.dataTransfer.files);
+});
+</script>
 {% endblock %}

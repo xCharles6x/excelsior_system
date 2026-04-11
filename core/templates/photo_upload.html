@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% block title %}Upload Photo — Excelsior Aviation GSE{% endblock %}
+
+{% block extra_css %}
+<style>
+  .upload-drop-zone {
+    border: 2.5px dashed #b3d9ff; border-radius: 14px;
+    padding: 2.5rem 1.5rem; text-align: center;
+    background: #f5faff; cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative; margin-bottom: 1.25rem;
+  }
+  .upload-drop-zone:hover,
+  .upload-drop-zone.dragover { border-color: #1a6fbb; background: #e8f4ff; }
+  .upload-drop-zone i { font-size: 2.5rem; color: #1a6fbb; display: block; margin-bottom: 0.6rem; }
+  .upload-drop-zone p { font-size: 0.9rem; color: #555; margin: 0; }
+  .upload-drop-zone strong { color: #1a6fbb; }
+  #fileInput { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+  .preview-wrap {
+    display: none; text-align: center; margin-bottom: 1.25rem;
+  }
+  .preview-wrap img {
+    max-height: 260px; border-radius: 10px;
+    border: 2px solid #b3d9ff; object-fit: contain;
+  }
+  .preview-name { font-size: 0.8rem; color: #7a7f8c; margin-top: 0.4rem; }
+
+  .btn-camera {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: #1c1c2e; color: #fff; border: none; border-radius: 8px;
+    font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 0.88rem;
+    padding: 0.55rem 1.1rem; cursor: pointer; margin-bottom: 0.5rem;
+    transition: background .18s;
+  }
+  .btn-camera:hover { background: #333; }
+
+  .or-divider {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin: 0.75rem 0; color: #bbb; font-size: 0.8rem;
+  }
+  .or-divider::before, .or-divider::after { content:''; flex:1; height:1px; background:#e8e9ec; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="back-bar">
+  <a href="{% url 'photo_gallery' %}" class="back-btn"><i class="bi bi-arrow-left"></i> Photo Gallery</a>
+</div>
+<div class="page-header">
+  <h1><i class="bi bi-cloud-upload-fill"></i> Upload Photo</h1>
+  <p>Add a photo reference with equipment details — metadata is stored automatically</p>
+</div>
+
+<div class="content-wrap">
+  <form method="post" enctype="multipart/form-data" novalidate id="uploadForm">
+    {% csrf_token %}
+
+    <!-- Photo Upload Area -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-header"><i class="bi bi-image"></i> Photo</div>
+      <div class="card-body">
+
+        <!-- Camera button (mobile: triggers camera directly) -->
+        <button type="button" class="btn-camera" onclick="document.getElementById('cameraInput').click()">
+          <i class="bi bi-camera-fill"></i> Take a Photo
+        </button>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFileChange(this)"/>
+
+        <div class="or-divider">or</div>
+
+        <!-- Drag & Drop zone -->
+        <div class="upload-drop-zone" id="dropZone">
+          <input type="file" id="fileInput" name="photo" accept="image/*" onchange="handleFileChange(this)" required/>
+          <i class="bi bi-cloud-upload"></i>
+          <p><strong>Click to browse</strong> or drag & drop an image here</p>
+          <p style="font-size:0.75rem;color:#aaa;margin-top:0.3rem;">JPG, PNG, WEBP, HEIC accepted</p>
+        </div>
+
+        <!-- Image preview -->
+        <div class="preview-wrap" id="previewWrap">
+          <img src="" id="previewImg" alt="Preview"/>
+          <div class="preview-name" id="previewName"></div>
+        </div>
+
+        {% if form.photo.errors %}
+          <ul class="errorlist">{% for e in form.photo.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Metadata -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-header"><i class="bi bi-info-circle"></i> Equipment Details</div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Equipment / Description</label>
+            {{ form.equipment_name }}
+            {% for e in form.equipment_name.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            {{ form.record_date }}
+            {% for e in form.record_date.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label>Serial Number</label>
+            {{ form.serial_number }}
+            {% for e in form.serial_number.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label>Part Number</label>
+            {{ form.part_number }}
+            {% for e in form.part_number.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label>Source Type</label>
+            {{ form.source_type }}
+            {% for e in form.source_type.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label>Caption <span style="color:#aaa;font-weight:400;">(optional)</span></label>
+            {{ form.caption }}
+            {% for e in form.caption.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <div style="margin-top:0.6rem;padding:0.7rem 0.9rem;background:#f0f7ff;border-radius:8px;border:1px solid #b3d9ff;font-size:0.8rem;color:#1a5faa;">
+          <i class="bi bi-person-check"></i>
+          <strong>Uploaded by</strong> and <strong>Upload date/time</strong> will be recorded automatically from your account.
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+      <button type="submit" class="btn-orange" id="submitBtn">
+        <i class="bi bi-cloud-upload-fill"></i> Upload Photo
+      </button>
+      <a href="{% url 'photo_gallery' %}" class="btn-white">
+        <i class="bi bi-x-lg"></i> Cancel
+      </a>
+    </div>
+  </form>
+</div>
+
+<style>
+  .field-error { color:#c0392b; font-size:0.78rem; margin-top:0.25rem; font-weight:600; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Handle file selection from either input
+function handleFileChange(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Sync: if camera picked a file, copy it to the main fileInput
+  if (input.id === 'cameraInput') {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('fileInput').files = dt.files;
+  }
+
+  // Show preview
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('previewName').textContent = file.name;
+    document.getElementById('previewWrap').style.display = 'block';
+    document.getElementById('dropZone').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+
+  // Auto-fill date to today if empty
+  const dateField = document.querySelector('[name="record_date"]');
+  if (dateField && !dateField.value) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm   = String(today.getMonth()+1).padStart(2,'0');
+    const dd   = String(today.getDate()).padStart(2,'0');
+    dateField.value = `${yyyy}-${mm}-${dd}`;
+  }
+}
+
+// Drag and drop
+const dz = document.getElementById('dropZone');
+['dragenter','dragover'].forEach(ev => {
+  dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); });
+});
+['dragleave','drop'].forEach(ev => {
+  dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); });
+});
+dz.addEventListener('drop', e => {
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('fileInput').files = dt.files;
+    handleFileChange(document.getElementById('fileInput'));
+  }
+});
+</script>
+{% endblock %}
