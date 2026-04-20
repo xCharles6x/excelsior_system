@@ -81,28 +81,32 @@
       <div class="card-body">
         <div class="form-grid">
           <div class="form-group">
+            <label>Brand</label>
+            {{ form.brand }}{{ form.brand.errors }}
+          </div>
+          <div class="form-group">
             <label>Description</label>
             {{ form.description }}{{ form.description.errors }}
           </div>
           <div class="form-group">
-            <label>Capacity</label>
-            {{ form.capacity }}{{ form.capacity.errors }}
-          </div>
-          <div class="form-group">
-            <label>Model Number</label>
-            {{ form.model_number }}{{ form.model_number.errors }}
-          </div>
-          <div class="form-group">
-            <label>Serial Number</label>
-            {{ form.serial_number }}{{ form.serial_number.errors }}
+            <label>Part Number</label>
+            {{ form.part_number }}{{ form.part_number.errors }}
           </div>
           <div class="form-group">
             <label>Location</label>
             {{ form.location }}{{ form.location.errors }}
           </div>
           <div class="form-group">
-            <label>Quantity</label>
+            <label>QTY <span style="color:#7a7f8c;font-size:0.78rem;font-weight:400;">(on hand)</span></label>
             {{ form.quantity }}{{ form.quantity.errors }}
+          </div>
+          <div class="form-group">
+            <label>Less By <span style="color:#7a7f8c;font-size:0.78rem;font-weight:400;">(deduct from stock)</span></label>
+            {{ form.less_by }}{{ form.less_by.errors }}
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Use / Purpose</label>
+            {{ form.use }}{{ form.use.errors }}
           </div>
           <div class="form-group" style="grid-column: 1 / -1;">
             <label>Remarks</label>
@@ -122,8 +126,7 @@
         <input type="file" id="ivCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="ivAddFiles(this.files)"/>
         <div class="or-divider">or</div>
         <div class="multi-upload-zone" id="ivDropZone">
-          <!-- BAGO (may name="photos") -->
-<input type="file" class="multi-file-input" id="ivFileInput" name="photos" accept="image/*" multiple onchange="ivAddFiles(this.files)"/>
+          <input type="file" class="multi-file-input" id="ivFileInput" name="photos" accept="image/*" multiple onchange="ivAddFiles(this.files)"/>
           <i class="bi bi-cloud-upload"></i>
           <p><strong>Click to browse</strong> or drag & drop</p>
           <p style="font-size:0.72rem;color:#aaa;margin-top:0.2rem;">JPG, PNG, WEBP — multiple files allowed</p>

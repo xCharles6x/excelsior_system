@@ -896,6 +896,33 @@ def download_inventory_excel(request, pk):
     return response
 
 
+# ── NEXT CERTIFICATE NUMBER API ───────────────────────────────────────────────
+
+@login_required
+def next_certificate_number(request):
+    """Return next certificate number in YYYY-NNNNN format.
+    Unique number starts at 20050 and never repeats regardless of year."""
+    from datetime import date
+    START = 1080
+    year  = date.today().year
+    existing = set(
+        LoadTest.objects.exclude(certificate_number='')
+                        .values_list('certificate_number', flat=True)
+    )
+    used_nums = set()
+    for cn in existing:
+        parts = cn.split('-')
+        if len(parts) == 2:
+            try:
+                used_nums.add(int(parts[1]))
+            except ValueError:
+                pass
+    n = START
+    while n in used_nums:
+        n += 1
+    return JsonResponse({'certificate_number': f'{year}-{n}'})
+
+
 # ── AUTOCOMPLETE API ──────────────────────────────────────────────────────────
 
 @login_required

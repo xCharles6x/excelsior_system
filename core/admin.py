@@ -21,9 +21,22 @@ class LoadTestAdmin(admin.ModelAdmin):
 
 @admin.register(Inventory)
 class InventoryAdmin(admin.ModelAdmin):
-    list_display  = ('customer_name', 'description', 'model_number', 'serial_number',
-                     'location', 'quantity', 'created_at')
-    search_fields = ('customer_name', 'description', 'model_number', 'serial_number', 'location')
+    list_display  = (
+        'customer_name',
+        'description',
+        'part_number',   # ✔ existing field
+        'brand',         # ✔ existing field
+        'location',
+        'quantity',
+        'created_at'
+    )
+    search_fields = (
+        'customer_name',
+        'description',
+        'part_number',
+        'brand',
+        'location'
+    )
 
 
 @admin.register(RepairInspection)

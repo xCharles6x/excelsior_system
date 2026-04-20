@@ -67,18 +67,20 @@ class InventoryForm(forms.ModelForm):
         model  = Inventory
         fields = [
             'customer_name', 'customer_address',
-            'description', 'capacity', 'model_number', 'serial_number',
-            'location', 'quantity', 'remarks',
+            'brand', 'description', 'part_number',
+            'location', 'quantity', 'less_by',
+            'use', 'remarks',
         ]
         widgets = {
             'customer_name':    forms.TextInput(attrs=ac('customer_name', 'all', {'placeholder': 'e.g. Philippine Airlines'})),
             'customer_address': forms.TextInput(attrs=ac('customer_address', 'all', {'placeholder': 'e.g. NAIA Terminal 2, Pasay City'})),
+            'brand':            forms.TextInput(attrs=ac('brand', 'inventory', {'placeholder': 'e.g. Snap-on'})),
             'description':      forms.TextInput(attrs=ac('description', 'inventory')),
-            'capacity':         forms.TextInput(attrs=ac('capacity', 'inventory', {'placeholder': 'e.g. 10,000 lbs'})),
-            'model_number':     forms.TextInput(attrs=ac('model_number', 'all')),
-            'serial_number':    forms.TextInput(attrs=ac('serial_number', 'all')),
+            'part_number':      forms.TextInput(attrs=ac('part_number', 'inventory', {'placeholder': 'e.g. PN-98765'})),
             'location':         forms.TextInput(attrs=ac('location', 'inventory')),
-            'quantity':         forms.NumberInput(attrs=W),
+            'quantity':         forms.NumberInput(attrs={**W, 'min': '0'}),
+            'less_by':          forms.NumberInput(attrs={**W, 'min': '0', 'placeholder': '0'}),
+            'use':              forms.Textarea(attrs={**W, 'rows': 2, 'placeholder': 'Describe the purpose or use of this item…'}),
             'remarks':          forms.Textarea(attrs=WT),
         }
 

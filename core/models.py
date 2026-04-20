@@ -39,17 +39,22 @@ class LoadTest(models.Model):
 class Inventory(models.Model):
     customer_name    = models.CharField(max_length=255)
     customer_address = models.CharField(max_length=255, blank=True)
+    brand            = models.CharField(max_length=255, blank=True)
     description      = models.CharField(max_length=255, blank=True)
-    capacity         = models.CharField(max_length=100, blank=True)
-    model_number     = models.CharField(max_length=100, blank=True)
-    serial_number    = models.CharField(max_length=100, blank=True)
+    part_number      = models.CharField(max_length=100, blank=True)
     location         = models.CharField(max_length=255, blank=True)
     quantity         = models.PositiveIntegerField(default=0)
+    less_by          = models.PositiveIntegerField(default=0, help_text='Amount to deduct from current stock')
+    use              = models.TextField(blank=True, help_text='Purpose or usage of this item')
     remarks          = models.TextField(blank=True)
     created_at       = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.description} ({self.serial_number})"
+        return f"{self.description} ({self.part_number})"
+
+    @property
+    def stock_on_hand(self):
+        return max(self.quantity - self.less_by, 0)
 
     class Meta:
         verbose_name_plural = 'Inventories'

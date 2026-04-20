@@ -196,7 +196,7 @@
             <a href="{% url 'certificate_download' c.pk %}" class="btn-act btn-dl-act" target="_blank">
               <i class="bi bi-file-earmark-word-fill"></i> Download
             </a>
-            <button class="btn-act btn-del-act" onclick="confirmDelete('{% url 'certificate_delete' c.pk %}', '{{ c.certificate_number }}')">
+            <button class="btn-act btn-del-act" onclick="confirmDelete('{% url "certificate_delete" c.pk|escapejs %}', '{{ c.certificate_number|escapejs }}')">
               <i class="bi bi-trash"></i> Delete
             </button>
           </div>
@@ -232,14 +232,23 @@
 {% block extra_js %}
 <script>
 document.getElementById('searchInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') { e.preventDefault(); this.closest('form').submit(); }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    this.closest('form').submit();
+  }
 });
 function confirmDelete(url, certNo) {
   document.getElementById('deleteForm').action = url;
-  document.getElementById('deleteModalMsg').textContent = `Certificate ${certNo} will be permanently deleted.`;
+  document.getElementById('deleteModalMsg').textContent = 'Certificate ' + certNo + ' will be permanently deleted.';
   document.getElementById('deleteModal').classList.add('show');
 }
-function closeModal() { document.getElementById('deleteModal').classList.remove('show'); }
-document.getElementById('deleteModal').addEventListener('click', function(e) { if (e.target===this) closeModal(); });
+function closeModal() {
+  document.getElementById('deleteModal').classList.remove('show');
+}
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeModal();
+  }
+});
 </script>
 {% endblock %}

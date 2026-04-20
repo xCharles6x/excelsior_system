@@ -48,7 +48,8 @@ urlpatterns = [
     path('api/loadcell-cert/delete/',  views.loadcell_cert_delete, name='loadcell_cert_delete'),
 
     # Autocomplete API
-    path('api/autocomplete/',          views.autocomplete_api,     name='autocomplete_api'),
+    path('api/autocomplete/',          views.autocomplete_api,          name='autocomplete_api'),
+    path('api/next-cert-number/',      views.next_certificate_number,   name='next_certificate_number'),
 
     # Go to Certification (pre-fill from records)
     path('cert-from/loadtest/<int:pk>/',  views.cert_from_loadtest,  name='cert_from_loadtest'),

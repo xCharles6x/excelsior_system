@@ -195,7 +195,7 @@
       </div>
       <div class="album-grid">
         {% for photo in album.list %}
-        <div class="photo-card" onclick="openLightbox({{ photo.pk }})">
+        <div class="photo-card" data-pk="{{ photo.pk }}" onclick="openLightbox(this.dataset.pk)">
           <div class="photo-card-img">
             <img src="{{ photo.photo.url }}" alt="{{ photo.equipment_name|default:'Photo' }}" loading="lazy"/>
           </div>
@@ -220,7 +220,7 @@
 <div id="gridView" class="photo-grid" style="display:none;">
   {% if photos %}
     {% for photo in photos %}
-    <div class="photo-card" onclick="openLightbox({{ photo.pk }})">
+    <div class="photo-card" data-pk="{{ photo.pk }}" onclick="openLightbox(this.dataset.pk)">
       <div class="photo-card-img">
         <img src="{{ photo.photo.url }}" alt="{{ photo.equipment_name|default:'Photo' }}" loading="lazy"/>
       </div>

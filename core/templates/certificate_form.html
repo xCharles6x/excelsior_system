@@ -3,7 +3,7 @@
 {% block extra_css %}
 <style>
 /* ── Layout ─────────────────────────────────────────────────────── */
-.cf-wrap { padding: 1.5rem; max-width: 1000px; }
+.cf-wrap { padding: 1.5rem 2rem; width: 100%; max-width: 100%; box-sizing: border-box; }
 
 /* ── Section card ───────────────────────────────────────────────── */
 .cf-section {
@@ -207,7 +207,7 @@ select.cert-input { cursor: pointer; }
 /* Responsive */
 @media(max-width:768px){
   .cf-grid-2, .cf-grid-3 { grid-template-columns:1fr; }
-  .cf-wrap { padding:1rem; }
+  .cf-wrap { padding: 1rem; }
 }
 </style>
 {% endblock %}

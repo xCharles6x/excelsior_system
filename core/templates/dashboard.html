@@ -3,14 +3,15 @@
 {% block extra_css %}
 <style>
   .dash-wrap { padding: 1.5rem; }
+
   .section-title {
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 0.78rem; font-weight: 800;
     text-transform: uppercase; letter-spacing: 1.5px;
-    color: #080808; margin-bottom: 0.85rem;
+    color: #FF6B00; margin-bottom: 0.85rem;
     display: flex; align-items: center; gap: 0.4rem;
   }
-  .section-title::after { content: ''; flex: 1; height: 1px; background: #e8e9ec; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: #ffd9c2; }
 
   .dash-grid {
     display: grid;
@@ -18,30 +19,34 @@
     gap: 1rem; margin-bottom: 1.75rem;
   }
   .dash-card {
-    background: #fff; border: 1px solid #e8e9ec; border-radius: 12px;
-    padding: 1.35rem; text-decoration: none; color: #1c1c2e;
+    background: #fff; border: 1px solid #ffd9c2; border-radius: 14px;
+    padding: 1.35rem; text-decoration: none; color: #1e1e1e;
     display: flex; flex-direction: column; gap: 0.85rem;
-    transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: all 0.2s; box-shadow: 0 2px 10px rgba(255,107,0,0.07);
   }
-  .dash-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.10); border-color: #ccc; }
+  .dash-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(255,107,0,0.16);
+    border-color: #FF6B00;
+  }
   .dash-card:active { transform: scale(0.98); }
   .dash-card-icon {
     width: 48px; height: 48px; border-radius: 10px;
-    background: #f8f9fa; border: 1.5px solid #e8e9ec;
+    background: #fff3ea; border: 1.5px solid #ffd9c2;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; color: #555;
+    font-size: 1.3rem; color: #FF6B00;
   }
   .dash-card h3 {
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 1.08rem; font-weight: 800;
-    text-transform: uppercase; letter-spacing: 0.5px; color: #1c1c2e;
+    text-transform: uppercase; letter-spacing: 0.5px; color: #1e1e1e;
   }
-  .dash-card p { font-size: 0.79rem; color: #7a7f8c; line-height: 1.4; }
+  .dash-card p { font-size: 0.79rem; color: #999; line-height: 1.4; }
   .dash-card .card-arrow {
-    color: #bbb; font-size: 0.9rem; margin-top: auto;
+    color: #ffb380; font-size: 0.9rem; margin-top: auto;
     align-self: flex-end; transition: transform 0.2s;
   }
-  .dash-card:hover .card-arrow { transform: translateX(4px); color: #777; }
+  .dash-card:hover .card-arrow { transform: translateX(4px); color: #FF6B00; }
 
   @media (max-width: 768px) {
     .dash-wrap { padding: 1rem; }
@@ -101,15 +106,15 @@
       <i class="bi bi-arrow-right card-arrow"></i>
     </a>
 
-    <a href="{% url 'photo_gallery' %}" class="dash-card" style="border-color:#d0eaff;background:#f5faff;">
-      <div class="dash-card-icon" style="background:#e8f4ff;border-color:#b3d9ff;color:#1a6fbb;"><i class="bi bi-images"></i></div>
+    <a href="{% url 'photo_gallery' %}" class="dash-card">
+      <div class="dash-card-icon"><i class="bi bi-images"></i></div>
       <div><h3>Photo Gallery</h3><p>Browse all uploaded equipment photos</p></div>
       <i class="bi bi-arrow-right card-arrow"></i>
     </a>
 
     {% if user.is_staff %}
-    <a href="{% url 'admin_user_list' %}" class="dash-card" style="border-color:#ffd980;background:#fffcf3;">
-      <div class="dash-card-icon" style="background:#fff8ec;border-color:#ffd980;color:#d4891a;"><i class="bi bi-shield-lock-fill"></i></div>
+    <a href="{% url 'admin_user_list' %}" class="dash-card">
+      <div class="dash-card-icon"><i class="bi bi-shield-lock-fill"></i></div>
       <div><h3>User Accounts</h3><p>Create and manage system user accounts</p></div>
       <i class="bi bi-arrow-right card-arrow"></i>
     </a>

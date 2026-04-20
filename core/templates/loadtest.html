@@ -168,6 +168,51 @@
 
 {% block extra_js %}
 <script>
+// ── AUTO-FILL DATE DUE (1 year after Date Inspection) ───────────────────────
+(function() {
+  const dateInspField = document.querySelector('[name="date_inspection"]');
+  const dateDueField  = document.querySelector('[name="date_due"]');
+  if (!dateInspField || !dateDueField) return;
+
+  function setDueDate() {
+    const val = dateInspField.value;
+    if (!val) return;
+    const d = new Date(val);
+    d.setFullYear(d.getFullYear() + 1);
+    const yyyy = d.getFullYear();
+    const mm   = String(d.getMonth() + 1).padStart(2, '0');
+    const dd   = String(d.getDate()).padStart(2, '0');
+    dateDueField.value = `${yyyy}-${mm}-${dd}`;
+    // flash to signal auto-fill
+    dateDueField.style.transition = 'background 0.4s';
+    dateDueField.style.background = '#fffbe8';
+    setTimeout(() => { dateDueField.style.background = ''; }, 1200);
+  }
+
+  dateInspField.addEventListener('change', setDueDate);
+  dateInspField.addEventListener('input',  setDueDate);
+})();
+
+// ── AUTO-FILL CERTIFICATE NUMBER ─────────────────────────────────────────────
+(function() {
+  const certField = document.querySelector('[name="certificate_number"]');
+  if (certField && !certField.value) {
+    fetch('/api/next-cert-number/')
+      .then(r => r.json())
+      .then(data => {
+        if (data.certificate_number && !certField.value) {
+          certField.value = data.certificate_number;
+          // flash the field briefly to signal auto-fill
+          certField.style.transition = 'background 0.4s';
+          certField.style.background = '#fffbe8';
+          setTimeout(() => { certField.style.background = ''; }, 1200);
+        }
+      })
+      .catch(() => {});
+  }
+})();
+
+// ── MULTI PHOTO UPLOAD ────────────────────────────────────────────────────────
 let ltFiles = [];
 
 function ltAddFiles(fileList) {
@@ -210,7 +255,6 @@ function ltRenderPreviews() {
 }
 
 function ltSyncInputs() {
-  // Build a single FileList from ltFiles and assign to the file input
   const dt = new DataTransfer();
   ltFiles.forEach(f => dt.items.add(f));
   document.getElementById('ltFileInput').files = dt.files;
