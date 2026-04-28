@@ -785,13 +785,13 @@ def cert_from_loadtest(request, pk):
             defaults={'address': record.customer_address or ''}
         )
     initial = {
-        'customer':            customer.pk if customer else None,
-        'address':             record.customer_address or '',
+        'customer':        customer.pk if customer else None,
+        'address':         record.customer_address or '',
         'product_description': record.description or '',
-        'capacity':            record.capacity or record.safe_load or '',
-        'model_number':        record.model_number or '',
-        'serial_number':       record.serial_number or '',
-        'tested_load':         record.tested_load or '',
+        'capacity':         record.capacity or record.safe_load or '',
+        'model_number':     record.model_number or '',
+        'serial_number':    record.serial_number or '',
+        'tested_load':      record.tested_load or '',
         'working_load_limits': record.safe_load or '',
         'date_of_inspection':  record.date_inspection or '',
         'due_next_inspection': record.date_due or '',
